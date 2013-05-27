@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+<html lang="en">
+	<head>
+		<title>Mobile BarcodeReader</title>
+	</head>
+	<body>  
+		<div id="container">
+			<img width="320" height="240" src="about:blank" alt="" id="picture">
+			<input id="Take-Picture" type="file" accept="image/*;capture=camera" />
+			<p id="textbit"></p>
+		</div>
+		<script type="text/javascript" src="Decoder.js"></script>
+		<script type="text/javascript">
+			var takePicture = document.querySelector("#Take-Picture"),
+			showPicture = document.querySelector("#picture");
+			Result = document.querySelector("#textbit");
+			Canvas = document.createElement("canvas");
+			Canvas.width=640;
+			Canvas.height=480;
+			ctx = Canvas.getContext("2d");
+			var DecodeWorker = new Worker("DecoderWorker.js");
+			DecodeWorker.onmessage = function(e){
+				if(typeof e.data === typeof ""){
+					Result.innerHTML=e.data;
+				}else{
+					Result.innerHTML="Decoding failed.";
+				}
+			}
+			if(takePicture && showPicture) {
+				takePicture.onchange = function (event) {
+					var files = event.target.files
+					if (files && files.length > 0) {
+						file = files[0];
+						try {
+							var URL = window.URL || window.webkitURL;
+							var imgURL = URL.createObjectURL(file);
+							showPicture.src = imgURL;
+							URL.revokeObjectURL(imgURL);
+							DecodeBar()
+						}
+						catch (e) {
+							try {
+								var fileReader = new FileReader();
+								fileReader.onload = function (event) {
+									showPicture.src = event.target.result;
+								};
+								fileReader.readAsDataURL(file);
+								DecodeBar()
+							}
+							catch (e) {
+								Result.innerHTML = "Neither createObjectURL or FileReader are supported";
+							}
+						}
+					}
+				};
+			}
+			function DecodeBar(){
+				showPicture.onload = function(){
+					ctx.drawImage(showPicture,0,0,Canvas.width,Canvas.height);
+					DecodeWorker.postMessage(ctx.getImageData(0,0,Canvas.width,Canvas.height).data);
+				}
+			}
+		</script>
+	</body>
+</html>
+					
