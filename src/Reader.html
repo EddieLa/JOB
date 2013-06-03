@@ -10,7 +10,6 @@
 			<input id="Take-Picture" type="file" accept="image/*;capture=camera" />
 			<p id="textbit"></p>
 		</div>
-		<script type="text/javascript" src="Decoder.js"></script>
 		<script type="text/javascript">
 			var takePicture = document.querySelector("#Take-Picture"),
 			showPicture = document.querySelector("#picture");
@@ -18,15 +17,37 @@
 			Canvas = document.createElement("canvas");
 			Canvas.width=640;
 			Canvas.height=480;
+			var resultArray = [];
 			ctx = Canvas.getContext("2d");
-			var DecodeWorker = new Worker("DecoderWorker.js");
-			DecodeWorker.onmessage = function(e){
-				if(typeof e.data === typeof ""){
-					Result.innerHTML=e.data;
+			var workerCount = 0;
+			function receiveMessage(e) {
+				if(e.data.success === "log") {
+					console.log(e.data.result);
+					return;
+				}
+				workerCount--;
+				if(e.data.success){
+					var tempArray = e.data.result;
+					for(var i = 0; i < tempArray.length; i++) {
+						if(resultArray.indexOf(tempArray[i]) == -1) {
+							resultArray.push(tempArray[i]);
+						}
+					}
+					Result.innerHTML=resultArray.join("<br />");
 				}else{
-					Result.innerHTML="Decoding failed.";
+					if(resultArray.length === 0 && workerCount === 0) {
+						Result.innerHTML="Decoding failed.";
+					}
 				}
 			}
+			var DecodeWorker = new Worker("DecoderWorker.js");
+			var RightWorker = new Worker("DecoderWorker.js");
+			var LeftWorker = new Worker("DecoderWorker.js");
+			var FlipWorker = new Worker("DecoderWorker.js");
+			DecodeWorker.onmessage = receiveMessage;
+			RightWorker.onmessage = receiveMessage;
+			LeftWorker.onmessage = receiveMessage;
+			FlipWorker.onmessage = receiveMessage;
 			if(takePicture && showPicture) {
 				takePicture.onchange = function (event) {
 					var files = event.target.files
@@ -58,7 +79,12 @@
 			function DecodeBar(){
 				showPicture.onload = function(){
 					ctx.drawImage(showPicture,0,0,Canvas.width,Canvas.height);
-					DecodeWorker.postMessage(ctx.getImageData(0,0,Canvas.width,Canvas.height).data);
+					resultArray = [];
+					workerCount = 4;
+					DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, cmd: "normal"});
+					RightWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, cmd: "right"});
+					LeftWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, cmd: "left"});
+					FlipWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, cmd: "flip"});
 				}
 			}
 		</script>
