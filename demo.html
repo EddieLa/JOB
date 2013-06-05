@@ -39,12 +39,8 @@
 				}
 			}
 			var DecodeWorker = new Worker("DecoderWorker.js");
-			var RightWorker = new Worker("DecoderWorker.js");
-			var LeftWorker = new Worker("DecoderWorker.js");
 			var FlipWorker = new Worker("DecoderWorker.js");
 			DecodeWorker.onmessage = receiveMessage;
-			RightWorker.onmessage = receiveMessage;
-			LeftWorker.onmessage = receiveMessage;
 			FlipWorker.onmessage = receiveMessage;
 			var resultArray = [];
 			var prev = document.getElementById("PreviousImage");
@@ -58,16 +54,15 @@
 			img.onload = function(){
 				ctx.drawImage(img,0,0,c.width,c.height);
 				resultArray = [];
-				workerCount += 4;
+				workerCount = 2;
 				DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "normal"});
-				RightWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "right"});
-				LeftWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "left"});
 				FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
 			}
 			function NextImage(){
+				if(workerCount > 0) return;
 				ResultOfDecoding.innerHTML='';
 				resultArray = [];
-				workerCount += 4;
+				workerCount = 2;
 				ImageList.push(img.src);
 				img.src=ImageList.shift();
 				ImageCounter++;
@@ -75,13 +70,12 @@
 				img.onload = function(){
 					ctx.drawImage(img,0,0,c.width,c.height);
 					DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "normal"});
-					RightWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "right"});
-					LeftWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "left"});
 					FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
 				}
 			}
 			
 			function PrevImage(){
+				if(workerCount > 0) return;
 				ResultOfDecoding.innerHTML='';
 				ImageList.unshift(img.src);
 				img.src=ImageList.pop();
@@ -90,10 +84,8 @@
 				img.onload = function(){
 					ctx.drawImage(img,0,0,c.width,c.height);
 					resultArray = [];
-					workerCount = +4;
+					workerCount = 2;
 					DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "normal"});
-					RightWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "right"});
-					LeftWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "left"});
 					FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
 				}
 			}
