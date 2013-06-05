@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+	<head>
+		<title>BarcodeTester</title>
+	</head>
+	<body id="body">
+		<a href="index.html" style="position:absolute;left:350px;">Main page</a>
+		<img src="Sample-images/001.png" width="320" height="240" id="Image" style="position:absolute;left:0;top:0;border:10px groove black" />
+		<p id="Result" style="position:absolute;top:275px;"></p>
+		<button style="position:absolute;top:265px;left:270px;padding:0;" type="button" width="30" id="NextImage">Next&emsp;&gt;&gt;&gt;</button>
+		<button style="position:absolute;top:265px;left:170px;padding:0;" type="button" width="30" id="PreviousImage">&lt;&lt;&lt;&ensp;Previous</button>
+		<script type="text/javascript">
+			var c=document.createElement("canvas");
+			var ctx=c.getContext("2d");
+			var img = document.getElementById("Image");
+			c.height=480;
+			c.width=640;
+			var workerCount = 0;
+			var ResultOfDecoding = document.getElementById("Result")
+			function receiveMessage(e) {
+				if(e.data.success === "log") {
+					console.log(e.data.result);
+					return;
+				}
+				workerCount--;
+				if(e.data.success){
+					var tempArray = e.data.result;
+					for(var i = 0; i < tempArray.length; i++) {
+						if(resultArray.indexOf(tempArray[i]) == -1) {
+							resultArray.push(tempArray[i]);
+						}
+					}
+					ResultOfDecoding.innerHTML=resultArray.join("<br />");
+				}else{
+					if(resultArray.length === 0 && workerCount === 0) {
+						ResultOfDecoding.innerHTML="Decoding failed.";
+					}
+				}
+			}
+			var DecodeWorker = new Worker("DecoderWorker.js");
+			var RightWorker = new Worker("DecoderWorker.js");
+			var LeftWorker = new Worker("DecoderWorker.js");
+			var FlipWorker = new Worker("DecoderWorker.js");
+			DecodeWorker.onmessage = receiveMessage;
+			RightWorker.onmessage = receiveMessage;
+			LeftWorker.onmessage = receiveMessage;
+			FlipWorker.onmessage = receiveMessage;
+			var resultArray = [];
+			var prev = document.getElementById("PreviousImage");
+			var next=document.getElementById("NextImage")
+			next.addEventListener("click",NextImage,false);
+			prev.addEventListener("click",PrevImage,false);
+			ImageCounter=0;
+			ImageList=["Sample-images/03.jpg","Sample-images/04.jpg","Sample-images/06 (2).jpg","Sample-images/06.jpg","Sample-images/07 (2).jpg","Sample-images/07.jpg","Sample-images/08 (2).jpg","Sample-images/code93.jpg","Sample-images/08.jpg","Sample-images/1 (2).JPG","Sample-images/1.gif","Sample-images/1.jpg","Sample-images/10 (2).JPG","Sample-images/10.jpg","Sample-images/11.jpg","Sample-images/12 (2).jpg","Sample-images/13 (2).jpg","Sample-images/13 (3).jpg","Sample-images/13 (4).jpg","Sample-images/136253222790411.gif","Sample-images/14 (2).jpg","Sample-images/15 (2).JPG","Sample-images/15 (3).jpg","Sample-images/15.jpg","Sample-images/16.jpg","Sample-images/17.jpg","Sample-images/1D2D.jpg","Sample-images/2.jpg","Sample-images/20 (2).JPG","Sample-images/20.jpg","Sample-images/20.png","Sample-images/21 (2).jpg","Sample-images/21.jpg","Sample-images/23.JPG","Sample-images/24.JPG","Sample-images/24.png","Sample-images/25.jpg","Sample-images/3037044282_c6396bc09a.jpg","Sample-images/31 (2).jpg","Sample-images/31.jpg","Sample-images/32.jpg","Sample-images/33.jpg","Sample-images/33.png","Sample-images/34.jpg","Sample-images/39.jpg","Sample-images/4.png","Sample-images/40.jpg","Sample-images/7 (2).JPG","Sample-images/7.jpg","Sample-images/7355ae1b-12eb-4e70-a650-f659.JPG","Sample-images/7784075_orig.gif","Sample-images/8.jpg","Sample-images/barcod.jpg","Sample-images/barcode-fax.gif","Sample-images/barcode-oldpaper.gif","Sample-images/barcode.jpg","Sample-images/barcode3.gif","Sample-images/barcodechart.gif","Sample-images/barcodeexample.gif","Sample-images/barcodes (3).jpg","Sample-images/barcodes2.jpg","Sample-images/barcode_code128.jpg","Sample-images/barcode_sc.png","Sample-images/Code128-C.bmp","Sample-images/Code128-warped.bmp","Sample-images/code128_barcode_label.jpg","Sample-images/code39.jpg","Sample-images/FrmI.jpg","Sample-images/getac_barcode_sw.jpg","Sample-images/image.jpg","Sample-images/image002.jpg","Sample-images/Kris-Aura-SP8bc.jpg","Sample-images/ku-xlarge.jpg","Sample-images/mesk.jpg","Sample-images/Picture1.png","Sample-images/sample_bar_code_label.jpg","Sample-images/shipping_label_2d_barcode.jpg","Sample-images/standard_barcodes.jpg","Sample-images/WpHole.jpg","Sample-images/WP_000075.jpg"];
+			ImageList.reverse();
+			img.onload = function(){
+				ctx.drawImage(img,0,0,c.width,c.height);
+				resultArray = [];
+				workerCount += 4;
+				DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "normal"});
+				RightWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "right"});
+				LeftWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "left"});
+				FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
+			}
+			function NextImage(){
+				ResultOfDecoding.innerHTML='';
+				resultArray = [];
+				workerCount += 4;
+				ImageList.push(img.src);
+				img.src=ImageList.shift();
+				ImageCounter++;
+				ImageCounter = ImageCounter>ImageList.length ? 0 : ImageCounter;
+				img.onload = function(){
+					ctx.drawImage(img,0,0,c.width,c.height);
+					DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "normal"});
+					RightWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "right"});
+					LeftWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "left"});
+					FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
+				}
+			}
+			
+			function PrevImage(){
+				ResultOfDecoding.innerHTML='';
+				ImageList.unshift(img.src);
+				img.src=ImageList.pop();
+				ImageCounter--;
+				ImageCounter = ImageCounter<0 ? ImageList.length : ImageCounter;
+				img.onload = function(){
+					ctx.drawImage(img,0,0,c.width,c.height);
+					resultArray = [];
+					workerCount = +4;
+					DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "normal"});
+					RightWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "right"});
+					LeftWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "left"});
+					FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
+				}
+			}
+		</script>
+	</body>
+</html>
