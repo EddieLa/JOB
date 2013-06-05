@@ -30,6 +30,11 @@
 						if(resultArray.indexOf(tempArray[i]) == -1) {
 							resultArray.push(tempArray[i]);
 						}
+						ResultOfDecoding.innerHTML=resultArray.join("<br />");
+					}
+				}else {
+					if(workerCount == 1) {
+						FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
 					}
 				}
 				if(workerCount == 0){
@@ -58,7 +63,6 @@
 				resultArray = [];
 				workerCount = 2;
 				DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "normal"});
-				FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
 			}
 			function NextImage(){
 				ResultOfDecoding.innerHTML='';
@@ -71,7 +75,6 @@
 				img.onload = function(){
 					ctx.drawImage(img,0,0,c.width,c.height);
 					DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "normal"});
-					FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
 				}
 			}
 			
@@ -86,7 +89,6 @@
 					resultArray = [];
 					workerCount = 2;
 					DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "normal"});
-					FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
 				}
 			}
 		</script>
