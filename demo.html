@@ -31,10 +31,12 @@
 							resultArray.push(tempArray[i]);
 						}
 					}
-					ResultOfDecoding.innerHTML=resultArray.join("<br />");
-				}else{
-					if(resultArray.length === 0 && workerCount === 0) {
+				}
+				if(workerCount == 0){
+					if(resultArray.length === 0) {
 						ResultOfDecoding.innerHTML="Decoding failed.";
+					}else {
+						ResultOfDecoding.innerHTML=resultArray.join("<br />");
 					}
 				}
 			}
@@ -59,7 +61,6 @@
 				FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
 			}
 			function NextImage(){
-				if(workerCount > 0) return;
 				ResultOfDecoding.innerHTML='';
 				resultArray = [];
 				workerCount = 2;
@@ -75,7 +76,6 @@
 			}
 			
 			function PrevImage(){
-				if(workerCount > 0) return;
 				ResultOfDecoding.innerHTML='';
 				ImageList.unshift(img.src);
 				img.src=ImageList.pop();
