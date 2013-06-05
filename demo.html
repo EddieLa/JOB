@@ -30,8 +30,8 @@
 						if(resultArray.indexOf(tempArray[i]) == -1) {
 							resultArray.push(tempArray[i]);
 						}
-						ResultOfDecoding.innerHTML=resultArray.join("<br />");
 					}
+					ResultOfDecoding.innerHTML=resultArray.join("<br />");
 				}else {
 					if(workerCount == 1) {
 						FlipWorker.postMessage({pixels: ctx.getImageData(0,0,c.width,c.height).data, cmd: "flip"});
