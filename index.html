@@ -76,6 +76,7 @@
 				};
 			}
 			function DecodeBar(){
+				Result.innerHTML="";
 				showPicture.onload = function(){
 					ctx.drawImage(showPicture,0,0,Canvas.width,Canvas.height);
 					resultArray = [];
