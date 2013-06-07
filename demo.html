@@ -82,6 +82,7 @@
 				ImageCounter = ImageCounter<0 ? ImageList.length : ImageCounter;
 			}
 			function Decode() {
+				if(workerCount > 0) return;
 				workerCount = 2;
 				ResultOfDecoding.innerHTML='';
 				resultArray = [];
