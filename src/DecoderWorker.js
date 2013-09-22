@@ -549,56 +549,22 @@ function Main(){
 		Selection = false;
 		do{
 			variationData = yStraighten(scaled.subarray(incrmt,incrmt+Image.width*4))
-			if(format != "EAN-13") {
-				Selection=BinaryString(variationData,0);
-				if(Selection) format = "Code128";
-				if(!Selection) {
-					Selection=BinaryString(variationData,1);
-					if(Selection) format = "Code93";
-				}
-				if(!Selection) {
-					Selection=BinaryString(variationData,2);
-					if(Selection) format = "Code39";
-				}
-			}
-			if(!Selection) {
-				var tempObj = BinaryString(variationData,3);
-				Selection=tempObj.string;
-				if(Selection){
-					format = "EAN-13";
-					if(typeof eanStatistics[Selection] == 'undefined') {
-						eanStatistics[Selection] = {count: 1,correction: tempObj.correction};
-						eanOrder.push(Selection);
-					} else {
-						eanStatistics[Selection].count = eanStatistics[Selection].count+1;
-						eanStatistics[Selection].correction = eanStatistics[Selection].correction + tempObj.correction;
-					}
-					Selection = false;
-				}
-			}
-			incrmt+=Image.width*4;
-		}while(!Selection&&incrmt<scaled.length)
-		if(Selection&&format != "EAN-13") allResults.push(format+": "+Selection);
-		if(format == "EAN-13") Selection = false;
-		if(!Selection){
-			EnlargeTable(4,2);
-			incrmt=0;
-			scaled = ScaleHeight(20);
-			do{
-				variationData = yStraighten(scaled.subarray(incrmt,incrmt+Image.width*4))
+			for(var i = 0; i < FormatPriority.length; i++) {
 				if(format != "EAN-13") {
-					Selection=BinaryString(variationData,0);
-					if(Selection) format = "Code128";
-					if(!Selection) {
+					if(FormatPriority[i] == "Code128") {
+						Selection=BinaryString(variationData,0);
+						if(Selection) format = "Code128";
+					}
+					if(FormatPriority[i] == "Code93") {
 						Selection=BinaryString(variationData,1);
 						if(Selection) format = "Code93";
 					}
-					if(!Selection) {
+					if(FormatPriority[i] == "Code39") {
 						Selection=BinaryString(variationData,2);
 						if(Selection) format = "Code39";
 					}
 				}
-				if(!Selection) {
+				if(FormatPriority[i] == "EAN-13") {
 					var tempObj = BinaryString(variationData,3);
 					Selection=tempObj.string;
 					if(Selection){
@@ -612,6 +578,50 @@ function Main(){
 						}
 						Selection = false;
 					}
+				}
+				if(Selection) break;
+			}
+			incrmt+=Image.width*4;
+		}while(!Selection&&incrmt<scaled.length)
+		if(Selection&&format != "EAN-13") allResults.push(format+": "+Selection);
+		if(format == "EAN-13") Selection = false;
+		if(!Selection){
+			EnlargeTable(4,2);
+			incrmt=0;
+			scaled = ScaleHeight(20);
+			do{
+				variationData = yStraighten(scaled.subarray(incrmt,incrmt+Image.width*4))
+				for(var i = 0; i < FormatPriority.length; i++) {
+					if(format != "EAN-13") {
+						if(FormatPriority[i] == "Code128") {
+							Selection=BinaryString(variationData,0);
+							if(Selection) format = "Code128";
+						}
+						if(FormatPriority[i] == "Code93") {
+							Selection=BinaryString(variationData,1);
+							if(Selection) format = "Code93";
+						}
+						if(FormatPriority[i] == "Code39") {
+							Selection=BinaryString(variationData,2);
+							if(Selection) format = "Code39";
+						}
+					}
+					if(FormatPriority[i] == "EAN-13") {
+						var tempObj = BinaryString(variationData,3);
+						Selection=tempObj.string;
+						if(Selection){
+							format = "EAN-13";
+							if(typeof eanStatistics[Selection] == 'undefined') {
+								eanStatistics[Selection] = {count: 1,correction: tempObj.correction};
+								eanOrder.push(Selection);
+							} else {
+								eanStatistics[Selection].count = eanStatistics[Selection].count+1;
+								eanStatistics[Selection].correction = eanStatistics[Selection].correction + tempObj.correction;
+							}
+							Selection = false;
+						}
+					}
+					if(Selection) break;
 				}
 				incrmt+=Image.width*4;
 			}while(!Selection&&incrmt<scaled.length)
@@ -1584,6 +1594,25 @@ self.onmessage = function(e) {
 		data: new Uint8ClampedArray(e.data.pixels),
 		width: 640,
 		height: 480
+	}
+	var availableFormats = ["Code128","Code93","Code39","EAN-13"];
+	FormatPriority = [];
+	var skipList = [];
+	if(typeof e.data.priority != 'undefined') {
+		FormatPriority = e.data.priority;
+	}
+	for(var i = 0; i < availableFormats.length; i++) {
+		if(FormatPriority.indexOf(availableFormats[i]) == -1) {
+			FormatPriority.push(availableFormats[i]);
+		}
+	}
+	if(typeof e.data.skip != 'undefined') {
+		skipList = e.data.skip;
+	}
+	for(var i = 0; i < skipList.length; i++) {
+		if(FormatPriority.indexOf(skipList[i]) != -1) {
+			FormatPriority.splice(FormatPriority.indexOf(skipList[i]),1);
+		}
 	}
 	CreateTable();
 	switch(e.data.cmd) {
