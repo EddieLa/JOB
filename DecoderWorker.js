@@ -546,17 +546,20 @@ function Main(){
 		var first = true;
 		var eanStatistics = {};
 		var eanOrder = [];
+		Selection = false;
 		do{
 			variationData = yStraighten(scaled.subarray(incrmt,incrmt+Image.width*4))
-			Selection=BinaryString(variationData,0);
-			if(Selection) format = "Code128";
-			if(!Selection) {
-				Selection=BinaryString(variationData,1);
-				if(Selection) format = "Code93";
-			}
-			if(!Selection) {
-				Selection=BinaryString(variationData,2);
-				if(Selection) format = "Code39";
+			if(format != "EAN-13") {
+				Selection=BinaryString(variationData,0);
+				if(Selection) format = "Code128";
+				if(!Selection) {
+					Selection=BinaryString(variationData,1);
+					if(Selection) format = "Code93";
+				}
+				if(!Selection) {
+					Selection=BinaryString(variationData,2);
+					if(Selection) format = "Code39";
+				}
 			}
 			if(!Selection) {
 				var tempObj = BinaryString(variationData,3);
@@ -583,15 +586,17 @@ function Main(){
 			scaled = ScaleHeight(20);
 			do{
 				variationData = yStraighten(scaled.subarray(incrmt,incrmt+Image.width*4))
-				Selection=BinaryString(variationData,0);
-				if(Selection) format = "Code128";
-				if(!Selection) {
-					Selection=BinaryString(variationData,1);
-					if(Selection) format = "Code93";
-				}
-				if(!Selection) {
-					Selection=BinaryString(variationData,2);
-					if(Selection) format = "Code39";
+				if(format != "EAN-13") {
+					Selection=BinaryString(variationData,0);
+					if(Selection) format = "Code128";
+					if(!Selection) {
+						Selection=BinaryString(variationData,1);
+						if(Selection) format = "Code93";
+					}
+					if(!Selection) {
+						Selection=BinaryString(variationData,2);
+						if(Selection) format = "Code39";
+					}
 				}
 				if(!Selection) {
 					var tempObj = BinaryString(variationData,3);
