@@ -81,6 +81,7 @@
 					ctx.drawImage(showPicture,0,0,Canvas.width,Canvas.height);
 					resultArray = [];
 					workerCount = 4;
+					Result.innerHTML="";
 					DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, cmd: "normal"});
 					RightWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, cmd: "right"});
 					LeftWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, cmd: "left"});
