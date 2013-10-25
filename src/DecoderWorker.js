@@ -707,6 +707,7 @@ function BinaryString(img,type){
 		corrections = 0
 		if(type == 0) len/=2;
 		binaryString=[];
+		EanCounter = 0;
 		bars=0;
 		binTemp=[]
 		trigger=false;
