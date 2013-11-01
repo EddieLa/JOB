@@ -529,16 +529,16 @@ function averageLines(){
 
 function Main(){
 	var tableSelection=ImgProcessing();
-	var allResults=[]
+	var allResults=[];
 	for(var z=0;z<tableSelection.length;z++){
 		Image.table=tableSelection[z];
 		Image.width = Image.table.length;
 		Image.height = Image.table[0].length;
 		CreateImageData();
-		var Selection = averageLines()
+		var Selection = averageLines();
 		CropTable(0,Selection[0],Image.width,Selection[1]);
-		BlackEdges(100)
-		RemoveDist()
+		BlackEdges(100);
+		RemoveDist();
 		var incrmt=0;
 		var scaled = ScaleHeight(30);
 		var variationData;
@@ -707,6 +707,7 @@ function BinaryString(img,type){
 		corrections = 0
 		if(type == 0) len/=2;
 		binaryString=[];
+		EanCounter = 0;
 		bars=0;
 		binTemp=[]
 		trigger=false;
@@ -912,11 +913,11 @@ function Distribution(BinArray,type){
 			tempBin[hitIndex] = max - (checking - 7);
 		}
 	}
-	var testData = 0;
-	for(var i = 0; i < tempBin.length; i++) {
-		testData += Math.abs(tempBin[i]-(BinArray[i]/sum)*total);
-	};
 	if(type == 3) {
+		var testData = 0;
+		for(var i = 0; i < tempBin.length; i++) {
+			testData += Math.abs(tempBin[i]-(BinArray[i]/sum)*total);
+		};
 		return {data: tempBin,correction:testData};
 	} else {
 		return tempBin;
