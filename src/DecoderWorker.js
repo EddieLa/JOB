@@ -1593,8 +1593,8 @@ formats: {
 self.onmessage = function(e) {
 	Image = {
 		data: new Uint8ClampedArray(e.data.pixels),
-		width: 640,
-		height: 480
+		width: e.data.width,
+		height: e.data.height
 	}
 	var availableFormats = ["Code128","Code93","Code39","EAN-13"];
 	FormatPriority = [];
