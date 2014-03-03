@@ -765,6 +765,7 @@ function BinaryString(img,type){
 					if(type == 2) skipWhite = true;
 				}
 				i-=4;
+				if(type == 3 && binaryString.length == 12) break;
 			}
 		}
 		if(binaryString.length>5){
