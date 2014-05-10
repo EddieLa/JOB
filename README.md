@@ -26,10 +26,3 @@ DecodeWorker.postMessage({pixels: image-data, cmd: normal/flip/left/right, skip:
 
 This will make it decode only EAN-13 and Code93.
 
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-<input type="hidden" name="cmd" value="_s-xclick">
-<input type="hidden" name="hosted_button_id" value="G5G3LGA8QRA6S">
-<input type="image" src="https://www.paypalobjects.com/sv_SE/SE/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal – ett tryggt och smidigt sätt att betala på nätet!">
-<img alt="" border="0" src="https://www.paypalobjects.com/sv_SE/i/scr/pixel.gif" width="1" height="1">
-</form>
-
