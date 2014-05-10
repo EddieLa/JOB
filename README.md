@@ -7,8 +7,8 @@ Supports multiple barcodes in one image and detects what type of barcodes there 
 It seems that when taking a picture with a smartphone, decreasing the resolution increases the chance
 for a successful decoding.
 
-I'm currently working on comments for the code, just in case someone actually tries to understand
-my scribbles.
+Stopped working on comments for the moment.
+instead i'm working on developing more settings to customise the decoding process, general performance and including more barcode formats.
 
 I've added two options for when you post a message to the decode worker, priority and skip.
 
@@ -26,3 +26,5 @@ DecodeWorker.postMessage({pixels: image-data, cmd: normal/flip/left/right, skip:
 
 This will make it decode only EAN-13 and Code93.
 
+If you like and/or use this project for commercial purposes consider donating to support my work.
+<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=G5G3LGA8QRA6S"><img src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" alt="PayPal - The safer, easier way to pay online!" /></a>
