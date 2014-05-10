@@ -4,6 +4,11 @@ BarcodeReader
 A simple Barcodereader for Code128, Code93, Code39 and EAN-13 barcodes in javascript.
 Supports multiple barcodes in one image and detects what type of barcodes there are.
 
+***
+If you like and/or use this project for commercial purposes consider donating to support my work.  
+<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=G5G3LGA8QRA6S"><img src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" alt="PayPal - The safer, easier way to pay online!" /></a>
+***
+
 It seems that when taking a picture with a smartphone, decreasing the resolution increases the chance
 for a successful decoding.
 
@@ -25,7 +30,3 @@ Skip is which encodings to ignore, useful for speeding up decoding if you're onl
 DecodeWorker.postMessage({pixels: image-data, cmd: normal/flip/left/right, skip: ["Code39","Code128"]});
 
 This will make it decode only EAN-13 and Code93.
-
-If you like and/or use this project for commercial purposes consider donating to support my work.  
-
-<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=G5G3LGA8QRA6S"><img src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" alt="PayPal - The safer, easier way to pay online!" /></a>
