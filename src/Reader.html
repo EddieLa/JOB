@@ -25,7 +25,16 @@
 					console.log(e.data.result);
 					return;
 				}
-				workerCount--;
+				if(e.data.finished) {
+					workerCount--;
+					if(workerCount) {
+						if(resultArray.length == 0) {
+							DecodeWorker.postMessage({ImageData: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, Width: Canvas.width, Height: Canvas.height, cmd: "flip"});
+						} else {
+							workerCount--;
+						}
+					}
+				}
 				if(e.data.success){
 					var tempArray = e.data.result;
 					for(var i = 0; i < tempArray.length; i++) {
@@ -41,13 +50,7 @@
 				}
 			}
 			var DecodeWorker = new Worker("DecoderWorker.js");
-			var RightWorker = new Worker("DecoderWorker.js");
-			var LeftWorker = new Worker("DecoderWorker.js");
-			var FlipWorker = new Worker("DecoderWorker.js");
 			DecodeWorker.onmessage = receiveMessage;
-			RightWorker.onmessage = receiveMessage;
-			LeftWorker.onmessage = receiveMessage;
-			FlipWorker.onmessage = receiveMessage;
 			if(takePicture && showPicture) {
 				takePicture.onchange = function (event) {
 					var files = event.target.files
@@ -80,12 +83,9 @@
 				showPicture.onload = function(){
 					ctx.drawImage(showPicture,0,0,Canvas.width,Canvas.height);
 					resultArray = [];
-					workerCount = 4;
+					workerCount = 2;
 					Result.innerHTML="";
-					DecodeWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, width: Canvas.width, height: Canvas.height, cmd: "normal"});
-					RightWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, width: Canvas.width, height: Canvas.height, cmd: "right"});
-					LeftWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, width: Canvas.width, height: Canvas.height, cmd: "left"});
-					FlipWorker.postMessage({pixels: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, width: Canvas.width, height: Canvas.height, cmd: "flip"});
+					DecodeWorker.postMessage({ImageData: ctx.getImageData(0,0,Canvas.width,Canvas.height).data, Width: Canvas.width, Height: Canvas.height, cmd: "normal"});
 				}
 			}
 		</script>
