@@ -14,31 +14,42 @@ If you like and/or use this project for commercial purposes consider donating to
 ***
 
 Stopped working on comments for the moment.
-instead i'm working on developing more settings to customise the decoding process, general performance and including more barcode formats.
+instead i'm working on developing more settings to customise the decoding process,
+general performance and including more barcode formats.
 
-Version 1.5 is up with some changes to the available setting, two new supported formats, better performance for Ean13 in many cases.
+Version 1.5 is up with some changes to the available setting, two new supported formats,
+better performance for Ean13 in many cases.
 
 The new default way of posting a message to the worker is as follows:
 
-DecodeWorker.postMessage({ImageData: data, Width: c.width, Height: c.height, cmd: "normal"});
+`DecodeWorker.postMessage({ImageData: data, Width: c.width, Height: c.height, cmd: "normal"});`
 
-The optional commands are:
+####Optional commands:
 
-Secure2Of5: Set to true by default, setting this to false will result in a much higher risk for false positives but might be good some isolated cases.
+**Secure2Of5**: Set to true by default, setting this to false will result in a much
+                higher risk for false positives but might be good some isolated cases.
 
-Ean13Speed: Set to true by default, setting this to false will make Ean13 decoding slower but a little safer from faulty readings.
+**Ean13Speed**: Set to true by default, setting this to false will make Ean13
+                decoding slower but a little safer from faulty readings.
 
-LowLight: Set to false by default, setting this true makes the worker use a different function for contrast/binary as suggested by drbsoftware this might be better for low light pictures.
+**LowLight**: Set to false by default, setting this true makes the worker use a different
+              function for contrast/binary as suggested by drbsoftware this might be better
+              for low light pictures.
 
-DecodeNr: Set to positive infinity by default, this is the maximum number of barcodes to decode. If the number of barcodes
-in the image is known, setting this to that number will increase perfomance in many cases.
+**DecodeNr**: Set to positive infinity by default, this is the maximum number
+              of barcodes to decode. If the number of barcodes in the image is known,
+              setting this to that number will increase perfomance in many cases.
 
-Decode: Set to ["Code128","Code93","Code39","EAN-13", "2Of5", "Inter2Of5"] by default, setting this to ["EAN-13"] will make the worker only decode Ean-13, this will increase performance in many cases. Very useful if you know what types of barcodes you're looking for.
+**Decode**: Set to ["Code128","Code93","Code39","EAN-13", "2Of5", "Inter2Of5"] by default, setting this to ["EAN-13"]
+            will make the worker only decode Ean-13, this will increase performance in many cases.
+            Very useful if you know what types of barcodes you're looking for.
 
-Here is a couple of examples of optional settings:
+####Optional settings examples:
 
-To only decode Code93, Code39 and Ean13:
-DecodeWorker.postMessage({ImageData: data, Width: c.width, Height: c.height, cmd: "normal", Decode: ["Code93","Code39","EAN-13"]});
+**Decode Code93, Code39 and Ean13:**
 
-To set the number of barcodes in image to 2 and use low light function:
-DecodeWorker.postMessage({ImageData: data, Width: c.width, Height: c.height, cmd: "normal": DecodeNr: 2, LowLight: true});
+`DecodeWorker.postMessage({ImageData: data, Width: c.width, Height: c.height, cmd: "normal", Decode: ["Code93","Code39","EAN-13"]});`
+
+**Decode two barcodes in a low-light image:**
+
+`DecodeWorker.postMessage({ImageData: data, Width: c.width, Height: c.height, cmd: "normal": DecodeNr: 2, LowLight: true});`
