@@ -541,7 +541,6 @@ function averageLines(){
 
 function Main(){
 	var tableSelection=ImgProcessing();
-	var allResults = [];
 	var successfulDecodings = 0;
 	for(var z=0;z<tableSelection.length;z++){
 		Image.table=tableSelection[z];
@@ -702,7 +701,7 @@ function Main(){
 		}
 		if(successfulDecodings >= DecodeNr) break;
 	}
-	return allResults;
+	return [];
 }
 
 function yStraighten(img){
@@ -1940,10 +1939,6 @@ self.onmessage = function(e) {
 		case "normal":
 			break;	
 	}
-	var FinalResult = Main();
-	if(FinalResult.length > 0) {
-		postMessage({result: FinalResult, success: true, finished: true});
-	} else {
-		postMessage({result: FinalResult, success: false, finished: true});
-	}
+	Main();
+	postMessage({result: FinalResult, success: false, finished: true});
 }
