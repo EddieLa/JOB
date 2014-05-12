@@ -1940,5 +1940,5 @@ self.onmessage = function(e) {
 			break;	
 	}
 	Main();
-	postMessage({result: FinalResult, success: false, finished: true});
+	postMessage({result: [], success: false, finished: true});
 }
