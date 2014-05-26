@@ -1408,6 +1408,7 @@ function DecodeCode39(string) {
 		}
 		if(special) {
 			if(typeof ExtendedEncoding[specialchar+character] == 'undefined') {
+				if(ExtendedExceptions.indexOf(character) != -1) resultString += character;
 			} else {
 				resultString += ExtendedEncoding[specialchar+character];
 			}
@@ -1433,6 +1434,7 @@ function DecodeCode93(string) {
 		}
 		if(special) {
 			if(typeof ExtendedEncoding[specialchar+character] == 'undefined') {
+				if(ExtendedExceptions.indexOf(character) != -1) resultString += character;
 			} else {
 				resultString += ExtendedEncoding[specialchar+character];
 			}
@@ -1853,6 +1855,8 @@ ExtendedEncoding = {
 "%R": '|',
 "%S": '~',
 }
+
+ExtendedExceptions = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","-","."];
 
 EAN13Encoding = {
 "L": {
