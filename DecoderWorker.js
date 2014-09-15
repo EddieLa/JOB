@@ -1106,7 +1106,7 @@ function Distribution(totalBinArray,type){
 		if(type == 4 || type == 5) {
 			var max = [[0,0], [0,0]];
 			for(var i = 0; i < BinArray.length; i++) {
-				if(!Number.isFinite(BinArray[i])) return [];
+				if(!isFinite(BinArray[i])) return [];
 				if(BinArray[i] > max[0][0]) {
 					max[0][0] = BinArray[i];
 					var prevPos = max[0][1];
