@@ -58,12 +58,6 @@ JOB = {
 		JOB.StreamCallback = callBack;
 	},
 	
-	// Note that stream is a video element, not a video src.
-	// Always set the stream before calling DecodeStream.
-	SetStream : function(stream) {
-		JOB.Stream = stream;
-	},
-	
 	// Switches for changing the Multiple property.
 	DecodeSingleBarcode : function() {
 		JOB.Config.Multiple = false;
@@ -135,8 +129,7 @@ JOB = {
 		}
 		if(JOB.DecodeStreamActive) {
 			JOB.ScanContext.drawImage(JOB.Stream,0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height);
-			console.log(JOB.SearchContext.getImageData(0,0,JOB.SearchCanvas.width,JOB.SearchCanvas.height).data);
-			JOB.SearchContext.drawImage(JOB.Stream,0,0,JOB.SearchCanvas.width, JOB.SearchCanvas.height);
+			JOB.SearchContext.drawImage(JOB.ScanCanvas,0,0,JOB.SearchCanvas.width, JOB.SearchCanvas.height);
 			JOB.DecoderWorker.postMessage({
 				scan : JOB.ScanContext.getImageData(0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height).data,
 				scanWidth : JOB.ScanCanvas.width,
@@ -173,16 +166,13 @@ JOB = {
 		});
 	},
 	
-	// Starts the decoding of a stream, the stream must've been set previously.
-	DecodeStream : function() {
-		if(JOB.Stream == null) {
-			console.log("Stream hasn't been set, please use JOB.SetStream");
-			return;
-		}
+	// Starts the decoding of a stream, the stream is a video not a blob i.e it's an element.
+	DecodeStream : function(stream) {
+		JOB.Stream = stream;
 		JOB.DecodeStreamActive = true;
 		JOB.DecoderWorker.onmessage = JOB.JOBStreamCallback;
 		JOB.ScanContext.drawImage(JOB.Stream,0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height);
-		JOB.SearchContext.drawImage(JOB.Stream,0,0,JOB.SearchCanvas.width, JOB.SearchCanvas.height);
+		JOB.SearchContext.drawImage(JOB.ScanCanvas,0,0,JOB.SearchCanvas.width, JOB.SearchCanvas.height);
 		JOB.DecoderWorker.postMessage({
 			scan : JOB.ScanContext.getImageData(0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height).data,
 			scanWidth : JOB.ScanCanvas.width,
