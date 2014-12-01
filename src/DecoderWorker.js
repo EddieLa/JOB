@@ -118,10 +118,14 @@ function IntensityGradient(data, width) {
 function greyScale(data) {
 	for(var i = 0; i < data.length; i+=4) {
 		var max = 0;
+		var min = 255;
 		max = data[i] > max ? data[i] : max;
 		max = data[i+1] > max ? data[i+1] : max;
 		max = data[i+2] > max ? data[i+2] : max;
-		data[i] = data[i+1] = data[i+2] = max;
+		min = data[i] < min ? data[i] : min;
+		min = data[i+1] < min ? data[i+1] : min;
+		min = data[i+2] < min ? data[i+2] : min;
+		data[i] = data[i+1] = data[i+2] = (max+min)/2;
 	}
 }
 
@@ -462,12 +466,13 @@ function ImgProcessing() {
 		newComponents[i] = [minX, minY, maxX-minX,maxY-minY];
 	}
 	allTables = [];
+	var imgWidth = Image.width;
 	for(var i = 0; i < newComponents.length; i++) {
 		var newTable = [];
-		var x = newComponents[i][0]*2;
-		var y = newComponents[i][1]*2;
-		var width = newComponents[i][2]*2;
-		var height = newComponents[i][3]*2;
+		var x = newComponents[i][0]*(ScanImage.width/imgWidth);
+		var y = newComponents[i][1]*(ScanImage.width/imgWidth);
+		var width = newComponents[i][2]*(ScanImage.width/imgWidth);
+		var height = newComponents[i][3]*(ScanImage.width/imgWidth);
 		for(var k=x;k<x+width;k++){
 			var tempArray=[];
 			for(var j=y;j<y+height;j++){
