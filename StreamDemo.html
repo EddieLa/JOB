@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+<html lang="en">
+	<head>
+		<title>GetUserMedia demo</title>
+	</head>
+	<body>
+		<a href="http://eddiela.github.io/JOB" style="position:absolute;left:350px;">Main page</a>
+		<video id="video" width="320" height="240" src="">
+		</video>
+		<button id="decode" style="position:absolute;top:225px;left:330px" onclick="Decode()">Start decoding</button>
+		<button id="stopDecode" style="position:absolute;top:225px;left:450px" onclick="StopDecode()">Stop decoding</button>
+		<p id="Result" style="position:absolute;top:275px;"></p>
+		<script src="JOB.js"></script>
+		<script>
+			var result = document.getElementById("Result");
+			JOB.Init();
+			var streaming = false;
+			JOB.StreamCallback = function(result) {
+				if(result.length > 0){
+					var tempArray = [];
+					for(var i = 0; i < result.length; i++) {
+						tempArray.push(result[i].Format+" : "+result[i].Value);
+					}
+					Result.innerHTML=tempArray.join("<br />");
+				}
+			};
+			var video = document.getElementById("video");
+			navigator.getUserMedia = ( navigator.getUserMedia ||
+                       navigator.webkitGetUserMedia ||
+                       navigator.mozGetUserMedia ||
+                       navigator.msGetUserMedia);
+            if (navigator.getUserMedia) {
+   				navigator.getUserMedia (
+      				{
+        				video: true,
+         				audio: true
+      				},
+      				function(localMediaStream) {
+         				video.src = window.URL.createObjectURL(localMediaStream);
+         				video.play();
+         				streaming = true;
+      				},
+      				function(err) {
+         				console.log("The following error occured: " + err);
+      				}
+   				);
+			} else {
+   				console.log("getUserMedia not supported");
+			}
+			
+			function Decode() {
+				if(!streaming) return;
+				JOB.DecodeStream(video);
+			}
+			
+			function StopDecode() {
+				JOB.StopStreamDecode();
+			}
+		</script>
+	</body>
+</html>
