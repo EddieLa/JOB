@@ -175,24 +175,6 @@ function otsu(histogram, total) {
     return ( threshold1 + threshold2 ) / 2.0;
 }
 
-function CropTable(x,y,w,h){
-	if(w-x<Image.width&&w-x>0) Image.table = Image.table.slice(x,w);
-	if(h-y<Image.height&&h-y>0) {
-		for(var i=0;i<Image.table.length;i++){
-			Image.table[i] = Image.table[i].slice(y,h);
-		};
-	};
-	if(Image.width!==Image.table.length||Image.height!==Image.table[0].length) {
-		Image.width = Image.table.length;
-		Image.height = Image.table[0].length;
-		CreateImageData();
-	}
-}
-
-function Log(message) {
-	postMessage({result: message, success: "log"});
-}
-
 function CreateImageData(){
 	Image.data = new Uint8ClampedArray(Image.width*Image.height*4);
 	var Converter;
@@ -290,135 +272,85 @@ function ScaleHeight(scale) {
 	}
 	return new Uint8ClampedArray(tempArray);
 }
-function discriminateAreas() {
-	var objects = [];
-	for(var x = 0; x < Image.table.length; x++) {
-		for(var y = 0; y < Image.table[0].length;y++) {
-			if(Image.table[x][y][0] == 255) {
-				objects.push(floodCount([x,y]));
-			}
-		}
-	}
-	var max = 0;
-	for(var i = 0; i < objects.length; i++) {
-		if(objects[i].length > max) max = objects[i].length;
-	}
-	var newObjects = [];
-	var size = Image.table[0].length*Image.table.length;
-	for(var i = 0; i < objects.length; i++) {
-		if(objects[i].length > size/20) newObjects.push(objects[i]);
-	}
-	for(var i = 0; i < newObjects.length; i++) {
-		for(var j = 0; j < newObjects[i].length; j++) {
-			var x =newObjects[i][j][0];
-			var y = newObjects[i][j][1];
-			Image.table[x][y][0] = Image.table[x][y][1] = Image.table[x][y][2] = 255;
-		}
-	}
+
+function Intersects(rectOne, rectTwo) {
+	return (rectOne[0][0] <= rectTwo[0][1] &&
+          rectTwo[0][0] <= rectOne[0][1] &&
+          rectOne[1][0] <= rectTwo[1][1]&&
+          rectTwo[1][0] <= rectOne[1][1]);
 }
 
-function componentLabeling() {
-	var labels = [];
-	var data = [];
-	var labelImage = [];
-	for(var x = 0; x < Image.table.length; x++) {
-		var tempArray = [];
-		for(var y = 0; y < Image.table[0].length; y++) {
-			tempArray[tempArray.length] = -1;
-		}
-		labelImage[labelImage.length] = tempArray;
-	}
-	for(var y = 0; y < Image.table[0].length; y++) {
-		var tempArray = [];
-		var tempLabels = [];
-		var counter = 0;
-		for(var x = 0; x < Image.table.length; x++) {
-			if(Image.table[x][y][0] == 255) {
-				counter++;
-				tempArray.push([]);
-				tempLabels.push([]);
-				var length = tempArray.length-1;
-				var labelLength = tempLabels.length - 1;
-				var tempCount = 0;
-				do {
-					tempArray[length].push(Image.table.length*y + x);
-					if(x > 0) {
-						if(labelImage[x-1][y] >= 0 && tempLabels[labelLength].indexOf(labelImage[x-1][y]) == -1) {
-							tempLabels[labelLength].push(labelImage[x-1][y]);
-						}
-					}
-					if(y > 0) {
-						if(labelImage[x][y-1] >= 0 && tempLabels[labelLength].indexOf(labelImage[x][y-1]) == -1) {
-							tempLabels[labelLength].push(labelImage[x][y-1]);
-						}
-					}
-					x++;
-					tempCount++;
-				}while(x < Image.table.length && Image.table[x][y][0] == 255);
+function maxLocalization(max, maxPos,data) {
+	var originalMax = max;
+	var rects = [];
+	do {
+		var startX = maxPos%Image.width;
+		var startY = (maxPos - startX)/Image.width;
+		var minY = 0;
+		var maxY = Image.height;
+		var minX = 0;
+		var maxX = Image.width-1;
+		for(var y = startY; y < Image.height-1; y++) {
+			if(Image.table[startX][y+1][0] == 0) {
+				maxY = y;
+				break;
 			}
 		}
-		for(var i = 0; i < tempLabels.length; i++) {
-			if(tempLabels[i].length > 1 || tempLabels[i].length == 0) {
-				var label = labels.length;
-				labels[label] = label;
-				data[label] = [];
-				data[label].push(tempArray[i]);
-				var x = tempArray[i][0]%Image.table.length;
-				var y = (tempArray[i][0] - x)/Image.table.length;
-				for(var j = 0; j < tempArray[i].length; j++) {
-					x = tempArray[i][j]%Image.table.length;
-					y = (tempArray[i][j] - x)/Image.table.length;
-					labelImage[x][y] = label;
-				}
-			} else if(i > 0 && tempLabels[i].length == 1 && tempLabels[i-1].length == 1 && tempLabels[i][0] == tempLabels[i-1][0]) {
-					var label = tempLabels[i][0];
-					var x = tempArray[i][0]%Image.table.length;;
-					var y = (tempArray[i][0] - x)/Image.table.length;
-					for(var j = 0; j < tempArray[i].length; j++) {
-						data[label][data[label].length-1].push(tempArray[i][j]);
-						x = tempArray[i][j]%Image.table.length;
-						y = (tempArray[i][j] - x)/Image.table.length;
-						labelImage[x][y] = label;
-					}
-			} else if(tempLabels[i].length == 1) {
-				var label = tempLabels[i][0];
-				data[label].push(tempArray[i]);
-				var x = tempArray[i][0]%Image.table.length;;
-				var y = (tempArray[i][0] - x)/Image.table.length;
-				for(var j = 0; j < tempArray[i].length; j++) {
-					x = tempArray[i][j]%Image.table.length;
-					y = (tempArray[i][j] - x)/Image.table.length;
-					labelImage[x][y] = label;
+		for(var y = startY; y > 0; y--) {
+			if(Image.table[startX][y-1][0] == 0) {
+				minY = y;
+				break;
+			}
+		}
+		for(var x = startX; x < Image.width-1; x++) {
+			if(Image.table[x+1][startY][0] == 0) {
+				maxX = x;
+				break;
+			}
+		}
+		for(var x = startX; x > 0; x--) {
+			if(Image.table[x-1][startY][0] == 0) {
+				minX = x;
+				break;
+			}
+		}
+		for(var y = minY*Image.width; y <= maxY*Image.width; y+=Image.width) {
+			for(var x = minX; x <= maxX; x++) {
+				data[y+x] = 0;
+			}
+		}
+		var newRect = [[minX,maxX],[minY,maxY]];
+		for(var i = 0; i < rects.length; i++) {
+			if(Intersects(newRect,rects[i])) {
+				if(rects[i][0][1] - rects[i][0][0] > newRect[0][1]-newRect[0][0]) {
+					rects[i][0][0] = rects[i][0][0] < newRect[0][0] ? rects[i][0][0] : newRect[0][0];
+					rects[i][0][1] = rects[i][0][1] > newRect[0][1] ? rects[i][0][1] : newRect[0][1];
+					newRect = [];
+					break;
+				} else {
+					rects[i][0][0] = rects[i][0][0] < newRect[0][0] ? rects[i][0][0] : newRect[0][0];
+					rects[i][0][1] = rects[i][0][1] > newRect[0][1] ? rects[i][0][1] : newRect[0][1];
+					rects[i][1][0] = newRect[1][0];
+					rects[i][1][1] = newRect[1][1];
+					newRect = [];
+					break;
 				}
 			}
 		}
-	}
-	var newData = [];
-	for(var i = 0; i < data.length; i++) {
-		var width = 0;
-		var height = data[i].length;
-		for(var j = 0; j < data[i].length; j++) {
-			width += data[i][j].length;
+		if(newRect.length > 0) {
+			rects.push(newRect);
 		}
-		width /= height;
-		if(height < width) newData.push(data[i]);
-	}
-	data = JSON.parse(JSON.stringify(newData));
-	newData = [];
-	var pixelCounts = [];
-	var max = 0;
-	for(var i = 0; i < data.length; i++) {
-		var pixelCount = 0;
-		for(var j = 0; j < data[i].length; j++) {
-			pixelCount += data[i][j].length;
+		max = 0;
+		maxPos = 0;
+		var newMaxPos = 0;
+		for(var i = 0; i < data.length; i++) {
+			if(data[i] > max) {
+				max = data[i];
+				maxPos = i;
+			}
 		}
-		pixelCounts.push(pixelCount);
-		if(pixelCount > max) max = pixelCount;
-	}
-	for(var i = 0; i < pixelCounts.length; i++) {
-		if(pixelCounts[i] > max/10) newData.push(data[i]);
-	}
-	return newData;
+	}while(max > originalMax*0.70);
+	return rects;
 }
 
 function ImgProcessing() {
@@ -430,9 +362,13 @@ function ImgProcessing() {
 			min = min > newData[i] ? newData[i] : min;
 	}
 	var max = 0;
+	var maxPos = 0;
 	for(var i = 0; i < newData.length; i++) {
 		newData[i] = Math.round((newData[i]-min));
-		max = max < newData[i] ? newData[i] : max;
+		if(max < newData[i]) {
+			max = newData[i];
+			maxPos = i;
+		}
 	}
 	var hist = [];
 	for(var i = 0; i <= max; i++) {
@@ -450,42 +386,22 @@ function ImgProcessing() {
 		}
 	}
 	CreateTable();
-	var components = componentLabeling();
-	var newComponents = [];
-	for(var i = 0; i < components.length; i++) {
-		var minX = Number.MAX_VALUE;
-		var maxX = Number.MIN_VALUE;
-		var minY = (components[i][0][0] - (components[i][0][0]%Image.table.length))/Image.table.length;
-		var maxY = (components[i][components[i].length-1][0] - (components[i][components[i].length-1][0]%Image.table.length))/Image.table.length;
-		for(var k = 0; k < components[i].length; k++) {
-			var x = components[i][k][0]%Image.table.length;
-			if(x < minX) minX = x;
-			x = components[i][k][components[i][k].length-1]%Image.table.length;
-			if(x > maxX) maxX = x;
-		}
-		newComponents[i] = [minX, minY, maxX-minX,maxY-minY];
-	}
+	var rects = maxLocalization(max, maxPos,newData);
 	allTables = [];
-	var imgWidth = Image.width;
-	for(var i = 0; i < newComponents.length; i++) {
+	for(var i = 0; i < rects.length; i++) {
 		var newTable = [];
-		var x = newComponents[i][0]*(ScanImage.width/imgWidth);
-		var y = newComponents[i][1]*(ScanImage.width/imgWidth);
-		var width = newComponents[i][2]*(ScanImage.width/imgWidth);
-		var height = newComponents[i][3]*(ScanImage.width/imgWidth);
-		for(var k=x;k<x+width;k++){
+		for(var x = rects[i][0][0]*2; x < rects[i][0][1]*2; x++) {
 			var tempArray=[];
-			for(var j=y;j<y+height;j++){
-				tempArray.push([ScanImage.table[k][j][0],ScanImage.table[k][j][1],ScanImage.table[k][j][2],255]);
-			};
+			for(var y = rects[i][1][0]*2; y < rects[i][1][1]*2; y++) {
+				tempArray.push([ScanImage.table[x][y][0],ScanImage.table[x][y][1],ScanImage.table[x][y][2],255]);
+			}
 			newTable.push(tempArray);
-		};
+		}
 		Image.table = newTable;
 		Image.width = newTable.length;
 		Image.height = newTable[0].length;
 		CreateImageData();
-		allTables.push({table: newTable, data: new Uint8ClampedArray(Image.data), width: width, height: height});
-		
+		allTables.push({table: newTable, data: new Uint8ClampedArray(Image.data), width: Image.width, height: Image.height});
 	}
 }
 function showImage(data, width, height) {
@@ -506,7 +422,19 @@ function Main(){
 		var eanOrder = [];
 		Selection = false;
 		do{
-			variationData = yStraighten(scaled.subarray(incrmt,incrmt+Image.width*4));
+			var tempData =scaled.subarray(incrmt,incrmt+Image.width*4);
+			var hist = [];
+			for(var i = 0; i < 256; i++) {
+				hist[i] = 0;
+			}
+			for(var i = 0; i < tempData.length; i+=4) {
+				var val = Math.round((tempData[i]+tempData[i+1]+tempData[i+2])/3);
+				hist[val] = hist[val] + 1;
+			}
+			var thresh = otsu(hist, tempData.length/4);
+			var start = thresh < 40 ? 0 : thresh - 40;
+			var end = thresh > 255-40 ? 255 : thresh + 40;
+			variationData = yStraighten(tempData,start, end);
 			Selection=BinaryString(variationData);
 			if(Selection.string){
 				format = Selection.format;
@@ -534,7 +462,19 @@ function Main(){
 			incrmt=0;
 			scaled = ScaleHeight(20);
 			do{
-				variationData = yStraighten(scaled.subarray(incrmt,incrmt+Image.width*4));
+				var tempData =scaled.subarray(incrmt,incrmt+Image.width*4);
+				var hist = [];
+				for(var i = 0; i < 256; i++) {
+					hist[i] = 0;
+				}
+				for(var i = 0; i < tempData.length; i+=4) {
+					var val = Math.round((tempData[i]+tempData[i+1]+tempData[i+2])/3);
+					hist[val] = hist[val] + 1;
+				}
+				var thresh = otsu(hist, tempData.length/4);
+				var start = thresh < 40 ? 0 : thresh - 40;
+				var end = thresh > 255-40 ? 255 : thresh + 40;
+				variationData = yStraighten(tempData,start, end);
 				Selection=BinaryString(variationData);
 				if(Selection.string){
 					format = Selection.format;
@@ -585,15 +525,15 @@ function Main(){
 	return allResults;
 }
 
-function yStraighten(img){
+function yStraighten(img,start, end){
 	var average=0;
 	var threshold;
-	var newImg = new Uint8ClampedArray(Image.width*150*4);
+	var newImg = new Uint8ClampedArray(Image.width*(end-start+1)*4);
 	for(var i=0;i<newImg.length;i++){
 		newImg[i]=255;
 	}
 	for(var i=0;i<Image.width*4;i+=4){
-		threshold=180;
+		threshold=end;
 		average=(img[i]+img[i+1]+img[i+2])/3;
 		if(i < Image.width*4 -4) {
 			average+=(img[i+4]+img[i+5]+img[i+6])/3;
