@@ -202,24 +202,26 @@ JOB = {
 			image.exifdata = false;
 			if(image.complete) {
 				if(JOB.Config.SkipOrientation) {
-					JOB.JOBDecodeImage(image,1);
+					JOB.JOBDecodeImage(image,1,"");
 				} else {
 					EXIF.getData(image, function(exifImage) {
 						var orientation = EXIF.getTag(exifImage,"Orientation");
+						var sceneType = EXIF.getTag(exifImage,"SceneCaptureType");
 						if(typeof orientation != 'number') orientation = 1;
-						JOB.JOBDecodeImage(exifImage,orientation);
+						JOB.JOBDecodeImage(exifImage,orientation,sceneType);
 					});
 				}
 			} else {
 				var img = new Image();
 				img.onload = function() {
 					if(JOB.Config.SkipOrientation) {
-						JOB.JOBDecodeImage(img,1);
+						JOB.JOBDecodeImage(img,1,"");
 					} else {
 						EXIF.getData(this, function(exifImage) {
 							var orientation = EXIF.getTag(exifImage,"Orientation");
+							var sceneType = EXIF.getTag(exifImage,"SceneCaptureType");
 							if(typeof orientation != 'number') orientation = 1;
-							JOB.JOBDecodeImage(exifImage,orientation);
+							JOB.JOBDecodeImage(exifImage,orientation,sceneType);
 						});
 					}
 				};
@@ -229,12 +231,13 @@ JOB = {
 			var img = new Image();
 			img.onload = function() {
 				if(JOB.Config.SkipOrientation) {
-						JOB.JOBDecodeImage(img,1);
+					JOB.JOBDecodeImage(img,1,"");
 				} else {
 					EXIF.getData(this, function(exifImage) {
 						var orientation = EXIF.getTag(exifImage,"Orientation");
+						var sceneType = EXIF.getTag(exifImage,"SceneCaptureType");
 						if(typeof orientation != 'number') orientation = 1;
-						JOB.JOBDecodeImage(exifImage,orientation);
+						JOB.JOBDecodeImage(exifImage,orientation,sceneType);
 					});
 				}
 			};
@@ -266,10 +269,17 @@ JOB = {
 		JOB.Decoded = [];
 	},
 	
-	JOBDecodeImage : function (image,orientation) {
+	JOBDecodeImage : function (image,orientation,sceneCaptureType) {
+		console.log(sceneCaptureType);
 		if(orientation == 8 || orientation == 6) {
-			JOB.ScanCanvas.width = 480;
-			JOB.ScanCanvas.height = 640;
+			if(sceneCaptureType == "Landscape" && image.width > image.height) {
+				orientation = 1;
+				JOB.ScanCanvas.width = 640;
+				JOB.ScanCanvas.height = 480;
+			} else {
+				JOB.ScanCanvas.width = 480;
+				JOB.ScanCanvas.height = 640;
+			}
 		} else {
 			JOB.ScanCanvas.width = 640;
 			JOB.ScanCanvas.height = 480;
