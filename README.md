@@ -5,8 +5,7 @@ JOB (Javascript Only BarcodeReader) is a barcodereader for Code128, Code93, Code
 Interleaved 2 of 5 and EAN-13 barcodes in javascript.
 Supports multiple barcodes in one image and detects what type of barcodes there are.
 
-It seems that when taking a picture with a smartphone, decreasing the resolution increases the chance
-for a successful decoding.
+It seems that the issue with smartphones might have been one of exif orientation tags so there's a fix in JOB now and also a fix for some kind of downsampling issue for ios.
 
 ***
 If you like and/or use this project for commercial purposes consider donating to support my work.  
