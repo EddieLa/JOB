@@ -45,8 +45,8 @@ JOB = {
 	DecodeStreamActive : false, // Will be set to false when StopStreamDecode() is called.
 	Decoded : [], // Used to enfore the ForceUnique property.
 	DecoderWorker : new Worker("DecoderWorker.js"),
-	Image : document.createElement("img"),
-	Rotation : 1,
+	OrientationCallback : null,
+	PostOrientation : false,
 	// Always call the Init().
 	Init : function() {
 		JOB.ScanCanvas = JOB.FixCanvas(document.createElement("canvas"));
@@ -137,6 +137,10 @@ JOB = {
 			if(JOB.Config.LocalizationFeedback) {
 				JOB.LocalizationCallback(e.data.result);
 			}
+			return;
+		}
+		if(e.data.success == "orientationData") {
+			JOB.OrientationCallback(e.data.result);
 			return;
 		}
 		var filteredData = [];
@@ -272,6 +276,7 @@ JOB = {
 		}
 		JOB.DecoderWorker.onmessage = JOB.JOBImageCallback;
 		JOB.ScanContext.drawImage(image,0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height);
+		JOB.Orientation = orientation;
 		JOB.DecoderWorker.postMessage({
 			scan : JOB.ScanContext.getImageData(0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height).data,
 			scanWidth : JOB.ScanCanvas.width,
@@ -279,7 +284,8 @@ JOB = {
 			multiple : JOB.Config.Multiple,
 			decodeFormats : JOB.Config.DecodeFormats,
 			cmd : "normal",
-			rotation : orientation
+			rotation : orientation,
+			postOrientation : JOB.PostOrientation
 		});
 	},
 	

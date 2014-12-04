@@ -7,17 +7,19 @@
 	<body>
 		<a href="StreamDemo.html" style="position:absolute;left:350px;">GetUserMedia Demo</a>
 		<div id="container">
-			<img width="320" height="240" src="about:blank" alt="" id="picture">
+			<canvas width="320" height="240" id="picture"></canvas>
 			<input id="Take-Picture" type="file" accept="image/*;capture=camera" />
 			<p id="textbit"></p>
 		</div>
 		<script type="text/javascript" src="JOB.js"></script>
 		<script type="text/javascript">
 			var takePicture = document.querySelector("#Take-Picture"),
-			showPicture = document.querySelector("#picture");
+			showPicture = document.createElement("img");
 			Result = document.querySelector("#textbit");
+			var canvas =document.getElementById("picture");
+			var ctx = canvas.getContext("2d");
 			JOB.Init();
-			var callback = function(result) {
+			JOB.SetImageCallback(function(result) {
 				if(result.length > 0){
 					var tempArray = [];
 					for(var i = 0; i < result.length; i++) {
@@ -29,8 +31,27 @@
 						Result.innerHTML="Decoding failed.";
 					}
 				}
+			});
+			JOB.PostOrientation = true;
+			JOB.OrientationCallback = function(result) {
+				canvas.width = result.width;
+				canvas.height = result.height;
+				var data = ctx.getImageData(0,0,canvas.width,canvas.height);
+				for(var i = 0; i < data.data.length; i++) {
+					data.data[i] = result.data[i];
+				}
+				ctx.putImageData(data,0,0);
 			};
-			JOB.SetImageCallback(callback);
+			JOB.SwitchLocalizationFeedback(true);
+			JOB.SetLocalizationCallback(function(result) {
+				ctx.beginPath();
+				ctx.lineWIdth = "2";
+				ctx.strokeStyle="red";
+				for(var i = 0; i < result.length; i++) {
+					ctx.rect(result[i].x,result[i].y,result[i].width,result[i].height); 
+				}
+				ctx.stroke();
+			});
 			if(takePicture && showPicture) {
 				takePicture.onchange = function (event) {
 					var files = event.target.files;
@@ -38,7 +59,7 @@
 						file = files[0];
 						try {
 							var URL = window.URL || window.webkitURL;
-							showPicture.onload = function(){
+							showPicture.onload = function(event) {
 								Result.innerHTML="";
 								JOB.DecodeImage(showPicture);
 							};
@@ -49,7 +70,7 @@
 							try {
 								var fileReader = new FileReader();
 								fileReader.onload = function (event) {
-									showPicture.onload = function(){
+									showPicture.onload = function(event) {
 										Result.innerHTML="";
 										JOB.DecodeImage(showPicture);
 									};
