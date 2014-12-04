@@ -1,7 +1,7 @@
 /**
  * CallBacks:
  * __________________________________________________________________________________
- * All the callback function should have one parameter like JOB:
+ * All the callback function should have one parameter:
  * function(result){};
  * And the result parameter will contain an array of objects that look like JOB.
  * result = [{Format: the barcode type, Value: the value of the barcode}];
@@ -22,32 +22,47 @@ JOB = {
 		
 		// ForceUnique just must makes sure that the callback function isn't repeatedly called
 		// with the same barcode. Especially in the case of a video stream.
-		ForceUnique: true
+		ForceUnique: true,
+		
+		// Set to true if information about the localization should be recieved from the worker.
+		LocalizationFeedback: false,
+		
+		// Set to true if checking orientation of the image should be skipped.
+		// Checking orientation takes a bit of time for larger images, so if
+		// you are sure that the image orientation is 1 you should skip it.
+		SkipOrientation : false
 	},
 	SupportedFormats : ["Code128","Code93","Code39","EAN-13", "2Of5", "Inter2Of5", "Codabar"],// Don't touch.
 	SearchCanvas : null, // Don't the canvas either.
 	SearchContext : null,
 	ScanCanvas : null,
 	ScanContext : null,
+	SquashCanvas : document.createElement("canvas"),
 	ImageCallback : null, // Callback for the decoding of an image.
 	StreamCallback : null, // Callback for the decoding of a video.
+	LocalizationCallback : null, // Callback for localization.
 	Stream : null, // The actual video.
 	DecodeStreamActive : false, // Will be set to false when StopStreamDecode() is called.
 	Decoded : [], // Used to enfore the ForceUnique property.
 	DecoderWorker : new Worker("DecoderWorker.js"),
-	
+	Image : document.createElement("img"),
+	Rotation : 1,
 	// Always call the Init().
 	Init : function() {
-		JOB.SearchCanvas = document.createElement("canvas");
-		JOB.SearchCanvas.width = 320;
-		JOB.SearchCanvas.height = 240;
-		JOB.SearchContext = JOB.SearchCanvas.getContext("2d");
-		JOB.ScanCanvas = document.createElement("canvas");
+		JOB.ScanCanvas = JOB.FixCanvas(document.createElement("canvas"));
 		JOB.ScanCanvas.width = 640;
 		JOB.ScanCanvas.height = 480;
 		JOB.ScanContext = JOB.ScanCanvas.getContext("2d");
+		var script  = document.createElement('script');
+  		script.src  = "exif.js";
+ 		script.type = 'text/javascript';
+		document.getElementsByTagName('head').item(0).appendChild(script);
 	},
 	
+	// Value should be true or false.
+	SetRotationSkip : function(value) {
+		JOB.Config.SkipOrientation = value;
+	},
 	// Sets the callback function for the image decoding.
 	SetImageCallback : function(callBack) {
 		JOB.ImageCallback = callBack;
@@ -56,6 +71,22 @@ JOB = {
 	// Sets the callback function for the video decoding.
 	SetStreamCallback : function(callBack) {
 		JOB.StreamCallback = callBack;
+	},
+	
+	// Sets callback for localization, the callback function should take one argument.
+	// This will be an array with objects with format.
+	// {x, y, width, height}
+	// This represents a localization rectangle.
+	// The rectangle comes from a 320, 240 area i.e the search canvas.
+	SetLocalizationCallback : function(callBack) {
+		JOB.LocalizationCallback = callBack;
+		JOB.Config.LocalizationFeedback = true;
+	},
+	
+	// Set to true if LocalizationCallback is set and you would like to
+	// receive the feedback or false if 
+	SwitchLocalizationFeedback : function(bool) {
+		JOB.Config.LocalizationFeedback = bool;
 	},
 	
 	// Switches for changing the Multiple property.
@@ -102,6 +133,12 @@ JOB = {
 	
 	// The callback function for image decoding used internally by JOB.
 	JOBImageCallback : function(e) {
+		if(e.data.success == "localization") {
+			if(JOB.Config.LocalizationFeedback) {
+				JOB.LocalizationCallback(e.data.result);
+			}
+			return;
+		}
 		var filteredData = [];
 		for(var i = 0; i < e.data.result.length; i++) {
 			if(JOB.Decoded.indexOf(e.data.result[i].Value) == -1 || JOB.Config.ForceUnique == false) {
@@ -115,6 +152,12 @@ JOB = {
 	
 	// The callback function for stream decoding used internally by JOB.
 	JOBStreamCallback : function(e) {
+		if(e.data.success == "localization") {
+			if(JOB.Config.LocalizationFeedback) {
+				JOB.LocalizationCallback(e.data.result);
+			}
+			return;
+		}
 		if(e.data.success && JOB.DecodeStreamActive) {
 			var filteredData = [];
 			for(var i = 0; i < e.data.result; i++) {
@@ -148,22 +191,51 @@ JOB = {
 		}
 	},
 	
-	// The image decoding function, image is of course an image.
+	// The image decoding function, image is a data source for an image or an image element.
 	DecodeImage : function(image) {
-		JOB.DecoderWorker.onmessage = JOB.JOBImageCallback;
-		JOB.ScanContext.drawImage(image,0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height);
-		JOB.SearchContext.drawImage(image,0,0,JOB.SearchCanvas.width, JOB.SearchCanvas.height);
-		JOB.DecoderWorker.postMessage({
-			scan : JOB.ScanContext.getImageData(0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height).data,
-			scanWidth : JOB.ScanCanvas.width,
-			scanHeight : JOB.ScanCanvas.height,
-			search : JOB.SearchContext.getImageData(0,0,JOB.SearchCanvas.width,JOB.SearchCanvas.height).data,
-			searchWidth : JOB.SearchCanvas.width,
-			searchHeight : JOB.SearchCanvas.height,
-			multiple : JOB.Config.Multiple,
-			decodeFormats : JOB.Config.DecodeFormats,
-			cmd : "normal"
-		});
+		if(image instanceof Image || image instanceof HTMLImageElement)
+		{
+			image.exifdata = false;
+			if(image.complete) {
+				if(JOB.Config.SkipOrientation) {
+					JOB.JOBDecodeImage(image,1);
+				} else {
+					EXIF.getData(image, function(exifImage) {
+						var orientation = EXIF.getTag(exifImage,"Orientation");
+						if(typeof orientation != 'number') orientation = 1;
+						JOB.JOBDecodeImage(exifImage,orientation);
+					});
+				}
+			} else {
+				var img = new Image();
+				img.onload = function() {
+					if(JOB.Config.SkipOrientation) {
+						JOB.JOBDecodeImage(img,1);
+					} else {
+						EXIF.getData(this, function(exifImage) {
+							var orientation = EXIF.getTag(exifImage,"Orientation");
+							if(typeof orientation != 'number') orientation = 1;
+							JOB.JOBDecodeImage(exifImage,orientation);
+						});
+					}
+				};
+				img.src = image.src;
+			}
+		} else {
+			var img = new Image();
+			img.onload = function() {
+				if(JOB.Config.SkipOrientation) {
+						JOB.JOBDecodeImage(img,1);
+				} else {
+					EXIF.getData(this, function(exifImage) {
+						var orientation = EXIF.getTag(exifImage,"Orientation");
+						if(typeof orientation != 'number') orientation = 1;
+						JOB.JOBDecodeImage(exifImage,orientation);
+					});
+				}
+			};
+			img.src = image;
+		}
 	},
 	
 	// Starts the decoding of a stream, the stream is a video not a blob i.e it's an element.
@@ -172,17 +244,14 @@ JOB = {
 		JOB.DecodeStreamActive = true;
 		JOB.DecoderWorker.onmessage = JOB.JOBStreamCallback;
 		JOB.ScanContext.drawImage(JOB.Stream,0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height);
-		JOB.SearchContext.drawImage(JOB.ScanCanvas,0,0,JOB.SearchCanvas.width, JOB.SearchCanvas.height);
 		JOB.DecoderWorker.postMessage({
 			scan : JOB.ScanContext.getImageData(0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height).data,
 			scanWidth : JOB.ScanCanvas.width,
 			scanHeight : JOB.ScanCanvas.height,
-			search : JOB.SearchContext.getImageData(0,0,JOB.SearchCanvas.width,JOB.SearchCanvas.height).data,
-			searchWidth : JOB.SearchCanvas.width,
-			searchHeight : JOB.SearchCanvas.height,
 			multiple : JOB.Config.Multiple,
 			decodeFormats : JOB.Config.DecodeFormats,
-			cmd : "normal"
+			cmd : "normal",
+			rotation : 1
 		});
 		
 	},
@@ -191,5 +260,78 @@ JOB = {
 	StopStreamDecode : function() {
 		JOB.DecodeStreamActive = false;
 		JOB.Decoded = [];
+	},
+	
+	JOBDecodeImage : function (image,orientation) {
+		if(orientation == 8 || orientation == 6) {
+			JOB.ScanCanvas.width = 480;
+			JOB.ScanCanvas.height = 640;
+		} else {
+			JOB.ScanCanvas.width = 640;
+			JOB.ScanCanvas.height = 480;
+		}
+		JOB.DecoderWorker.onmessage = JOB.JOBImageCallback;
+		JOB.ScanContext.drawImage(image,0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height);
+		JOB.DecoderWorker.postMessage({
+			scan : JOB.ScanContext.getImageData(0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height).data,
+			scanWidth : JOB.ScanCanvas.width,
+			scanHeight : JOB.ScanCanvas.height,
+			multiple : JOB.Config.Multiple,
+			decodeFormats : JOB.Config.DecodeFormats,
+			cmd : "normal",
+			rotation : orientation
+		});
+	},
+	
+	DetectVerticalSquash : function (img) {
+    	var ih = img.naturalHeight;
+    	var canvas = JOB.SquashCanvas;
+    	canvas.width = 1;
+    	canvas.height = ih;
+    	var ctx = canvas.getContext('2d');
+    	ctx.drawImage(img, 0, 0);
+    	try {
+        	var data = ctx.getImageData(0, 0, 1, ih).data;
+    	} catch (err) {
+        	console.log("Cannot check verticalSquash: CORS?");
+        	return 1;
+    	}
+    	var sy = 0;
+    	var ey = ih;
+    	var py = ih;
+    	while (py > sy) {
+        	var alpha = data[(py - 1) * 4 + 3];
+        	if (alpha === 0) {
+        	    ey = py;
+        	} else {
+            	sy = py;
+        	}
+        	py = (ey + sy) >> 1;
+    	}
+    	var ratio = (py / ih);
+    	return (ratio===0)?1:ratio;
+	},
+	
+	FixCanvas : function (canvas)
+	{
+    	var ctx = canvas.getContext('2d');
+    	var drawImage = ctx.drawImage;
+    	ctx.drawImage = function(img, sx, sy, sw, sh, dx, dy, dw, dh)
+    	{
+        	var vertSquashRatio = 1;
+        	if (!!img && img.nodeName == 'IMG')
+        	{
+            	vertSquashRatio = JOB.DetectVerticalSquash(img);
+            	sw || (sw = img.naturalWidth);
+            	sh || (sh = img.naturalHeight);
+        	}
+        	if (arguments.length == 9)
+            	drawImage.call(ctx, img, sx, sy, sw, sh, dx, dy, dw, dh / vertSquashRatio);
+        	else if (typeof sw != 'undefined')
+            	drawImage.call(ctx, img, sx, sy, sw, sh / vertSquashRatio);
+        	else
+            	drawImage.call(ctx, img, sx, sy);
+    	};
+    	return canvas;
 	}
 };
