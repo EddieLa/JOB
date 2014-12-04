@@ -38,31 +38,29 @@
 						file = files[0];
 						try {
 							var URL = window.URL || window.webkitURL;
-							var imgURL = URL.createObjectURL(file);
-							showPicture.src = imgURL;
-							URL.revokeObjectURL(imgURL);
-							DecodeBar();
+							showPicture.onload = function(){
+								Result.innerHTML="";
+								JOB.DecodeImage(showPicture);
+							};
+							showPicture.src = URL.createObjectURL(file);
 						}
 						catch (e) {
 							try {
 								var fileReader = new FileReader();
 								fileReader.onload = function (event) {
+									showPicture.onload = function(){
+										Result.innerHTML="";
+										JOB.DecodeImage(showPicture);
+									};
 									showPicture.src = event.target.result;
 								};
 								fileReader.readAsDataURL(file);
-								DecodeBar();
 							}
 							catch (e) {
 								Result.innerHTML = "Neither createObjectURL or FileReader are supported";
 							}
 						}
 					}
-				};
-			}
-			function DecodeBar(){
-				showPicture.onload = function(){
-					Result.innerHTML="";
-					JOB.DecodeImage(showPicture);
 				};
 			}
 		</script>

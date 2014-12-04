@@ -29,6 +29,42 @@ THE SOFTWARE.
 
 ------------------------ */
 
+function Rotate(data,width,height,rotation) {
+	var newData = [];
+	switch(rotation) {
+		case 90:
+			for(var x = 0; x < width*4; x+=4) {
+				for(var y = width*4*(height-1); y >= 0; y -= width*4) {
+					newData.push(data[x+y]);
+					newData.push(data[x+y+1]);
+					newData.push(data[x+y+2]);
+					newData.push(data[x+y+3]);
+				}
+			}
+			break;
+		case -90:
+			for(var x = width*4-4; x >= 0; x-=4) {
+				for(var y = 0; y < data.length; y += width*4) {
+					newData.push(data[x+y]);
+					newData.push(data[x+y+1]);
+					newData.push(data[x+y+2]);
+					newData.push(data[x+y+3]);
+				}
+			}
+			break;
+		case 180:
+			for(var y = width*4*(height-1); y >= 0; y-=width*4) {
+				for(var x = width*4 - 4; x >= 0; x -= 4) {
+					newData.push(data[x+y]);
+					newData.push(data[x+y+1]);
+					newData.push(data[x+y+2]);
+					newData.push(data[x+y+3]);
+				}
+			}
+	}
+	return new Uint8ClampedArray(newData);
+}
+
 function BoxFilter(data, width) {
 	var elements = [];
 	var sum = [];
@@ -76,6 +112,22 @@ function BoxFilter(data, width) {
 		}
 	}
 	return newData;
+}
+
+function Scale(data,width,height) {
+	var newData = [];
+	for(var y = 0; y < data.length; y+=width*8) {
+		for(var x = 0; x < width*4; x += 8) {
+			var r = (data[y+x] + data[y+x+4] + data[y+width*4+x] + data[y+width*4+x+4])/4;
+			newData.push(r);
+			var g = (data[y+x+1] + data[y+x+4+1] + data[y+width*4+x+1] + data[y+width*4+x+4+1])/4;
+			newData.push(g);
+			var b = (data[y+x+2] + data[y+x+4+2] + data[y+width*4+x+2] + data[y+width*4+x+4+2])/4;
+			newData.push(b);
+			newData.push(255);
+		}
+	}
+	return new Uint8ClampedArray(newData);
 }
 
 function IntensityGradient(data, width) {
@@ -387,6 +439,11 @@ function ImgProcessing() {
 	}
 	CreateTable();
 	var rects = maxLocalization(max, maxPos,newData);
+	var feedBack = [];
+	for(var i = 0; i < rects.length; i++) {
+		feedBack.push({x: rects[i][0][0], y : rects[i][1][0], width : rects[i][0][1] - rects[i][0][0], height: rects[i][1][1]-rects[i][1][0]});
+	}
+	if(feedBack.length > 0) postMessage({result: feedBack, success: "localization"});
 	allTables = [];
 	for(var i = 0; i < rects.length; i++) {
 		var newTable = [];
@@ -432,8 +489,8 @@ function Main(){
 				hist[val] = hist[val] + 1;
 			}
 			var thresh = otsu(hist, tempData.length/4);
-			var start = thresh < 40 ? 0 : thresh - 40;
-			var end = thresh > 255-40 ? 255 : thresh + 40;
+			var start = thresh < 41 ? 1 : thresh - 40;
+			var end = thresh > 254-40 ? 254 : thresh + 40;
 			variationData = yStraighten(tempData,start, end);
 			Selection=BinaryString(variationData);
 			if(Selection.string){
@@ -1975,15 +2032,31 @@ formats: {
 };
 
 self.onmessage = function(e) {
-	Image = {
-		data: new Uint8ClampedArray(e.data.search),
-		width: e.data.searchWidth,
-		height: e.data.searchHeight
-	};
 	ScanImage = {
 		data: new Uint8ClampedArray(e.data.scan),
 		width: e.data.scanWidth,
 		height: e.data.scanHeight
+	};
+	switch(e.data.rotation) {
+		case 8:
+			ScanImage.data = Rotate(ScanImage.data,ScanImage.width,ScanImage.height,-90);
+			var width = e.data.scanWidth;
+			ScanImage.width = ScanImage.height;
+			ScanImage.height = width;
+			break;
+		case 6:
+			ScanImage.data = Rotate(ScanImage.data,ScanImage.width,ScanImage.height,90);
+			var width = e.data.scanWidth;
+			ScanImage.width = ScanImage.height;
+			ScanImage.height = width;
+			break;
+		case 3:
+			ScanImage.data = Rotate(ScanImage.data,ScanImage.width,ScanImage.height,180);	
+	}
+	Image = {
+		data: Scale(ScanImage.data,ScanImage.width,ScanImage.height),
+		width: ScanImage.width/2,
+		height: ScanImage.height/2
 	};
 	availableFormats = ["Code128","Code93","Code39","EAN-13", "2Of5", "Inter2Of5", "Codabar"];
 	FormatPriority = [];
@@ -2002,19 +2075,6 @@ self.onmessage = function(e) {
 	}
 	CreateTable();
 	CreateScanTable();
-	switch(e.data.cmd) {
-		case "flip":
-			flipTable();
-			break;
-		case "right":
-			rotateTableRight();
-			break;
-		case "left":
-			rotateTableLeft();
-			break;
-		case "normal":
-			break;	
-	}
 	var FinalResult = Main();
 	if(FinalResult.length > 0) {
 		postMessage({result: FinalResult, success: true});
