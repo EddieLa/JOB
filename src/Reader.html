@@ -42,6 +42,7 @@
 								JOB.DecodeImage(showPicture);
 							};
 							showPicture.src = URL.createObjectURL(file);
+							URL.revokeObjectURL();
 						}
 						catch (e) {
 							try {
