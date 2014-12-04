@@ -61,9 +61,9 @@
 							showPicture.onload = function(event) {
 								Result.innerHTML="";
 								JOB.DecodeImage(showPicture);
+								URL.revokeObjectURL(showPicture.src);
 							};
 							showPicture.src = URL.createObjectURL(file);
-							URL.revokeObjectURL();
 						}
 						catch (e) {
 							try {
@@ -71,6 +71,7 @@
 								fileReader.onload = function (event) {
 									showPicture.onload = function(event) {
 										Result.innerHTML="";
+										console.log("filereader");
 										JOB.DecodeImage(showPicture);
 									};
 									showPicture.src = event.target.result;
