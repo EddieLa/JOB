@@ -2058,6 +2058,9 @@ self.onmessage = function(e) {
 		width: ScanImage.width/2,
 		height: ScanImage.height/2
 	};
+	if(e.data.postOrientation) {
+		postMessage({result: Image, success: "orientationData"});
+	}
 	availableFormats = ["Code128","Code93","Code39","EAN-13", "2Of5", "Inter2Of5", "Codabar"];
 	FormatPriority = [];
 	var decodeFormats = ["Code128","Code93","Code39","EAN-13", "2Of5", "Inter2Of5", "Codabar"];
