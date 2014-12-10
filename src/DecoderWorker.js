@@ -65,13 +65,13 @@ function Rotate(data,width,height,rotation) {
 	return new Uint8ClampedArray(newData);
 }
 
-function BoxFilter(data, width) {
+function BoxFilter(data, width, radius) {
 	var elements = [];
 	var sum = [];
 	for(var x = 0; x < width; x++) {
 		elements.push([]);
 		sum.push(0);
-		for(var y = 0; y < 16*width; y+=width) {
+		for(var y = 0; y < (radius+1)*width; y+=width) {
 			elements[elements.length-1].push(data[x+y]);
 			sum[sum.length-1] = sum[sum.length-1] + data[x+y];
 		}
@@ -84,28 +84,28 @@ function BoxFilter(data, width) {
 			for(var i = x; i >= 0; i--) {
 				newVal += sum[i];
 				length++;
-				if(length == 16) break;
+				if(length == radius+1) break;
 			}
 			var tempLength = 0;
 			for(var i = x+1; i < width; i++) {
 				newVal += sum[i];
 				length++;
 				tempLength++;
-				if(tempLength == 15) break;
+				if(tempLength == radius) break;
 			}
 			length *= elements[0].length;
 			newVal /= length;
 			newData.push(newVal);
 		}
-		if(y - 15*width >= 0) {
+		if(y - radius*width >= 0) {
 			for(var i = 0; i < elements.length; i++) {
 				var val = elements[i].shift();
 				sum[i] = sum[i] - val;
 			}
 		}
-		if(y + 16*width < data.length) {
+		if(y + (radius+1)*width < data.length) {
 			for(var i = 0; i < elements.length; i++) {
-				var val = data[i+y + 16*width];
+				var val = data[i+y + (radius+1)*width];
 				elements[i].push(val);
 				sum[i] = sum[i] + val;
 			}
@@ -139,20 +139,14 @@ function IntensityGradient(data, width) {
 			var horizontalDiff = 0;
 			var verticalDiff = 0;
 			for(var i = 1; i < 2; i++) {
-				if(x - i*4 > 0) {
-					horizontalDiff = horizontalDiff +Math.abs(data[y+x]-data[y+x-i*4]);
-				}
 				if(x+ i*4 < width*4) {
 					horizontalDiff = horizontalDiff + Math.abs(data[y+x]-data[y+x+i*4]);
-				}
-				if(y- width*4*i > 0) {
-					verticalDiff = verticalDiff+ Math.abs(data[y+x]-data[y+x-width*4*i]);
 				}
 				if(y + width*4*i < data.length) {
 					verticalDiff += verticalDiff + Math.abs(data[y+x]-data[y+x+width*4*i]);
 				}
 			}
-			var diff = horizontalDiff/2 - verticalDiff/2;
+			var diff = horizontalDiff - verticalDiff;
 			max = diff > max ? diff : max;
 			min = diff < min ? diff : min;
 			newData.push(diff);
@@ -408,18 +402,37 @@ function maxLocalization(max, maxPos,data) {
 function ImgProcessing() {
 	greyScale(Image.data) ;
 	var newData = IntensityGradient(Image.data,Image.width);
-	newData = BoxFilter(newData, Image.width);
+	newData = BoxFilter(newData, Image.width,15);
 	var min = newData[0];
 	for(var i = 1; i < newData.length; i++) {
 			min = min > newData[i] ? newData[i] : min;
 	}
 	var max = 0;
 	var maxPos = 0;
+	var avrgLight = 0;
 	for(var i = 0; i < newData.length; i++) {
 		newData[i] = Math.round((newData[i]-min));
+		avrgLight += newData[i];
 		if(max < newData[i]) {
 			max = newData[i];
 			maxPos = i;
+		}
+	}
+	avrgLight /= newData.length;
+	if(avrgLight < 15) {
+		newData = BoxFilter(newData, Image.width,8);
+		min = newData[0];
+		for(var i = 1; i < newData.length; i++) {
+			min = min > newData[i] ? newData[i] : min;
+		}
+		max = 0;
+		maxPos = 0;
+		for(var i = 0; i < newData.length; i++) {
+			newData[i] = Math.round((newData[i]-min));
+			if(max < newData[i]) {
+				max = newData[i];
+				maxPos = i;
+			}
 		}
 	}
 	var hist = [];
@@ -454,6 +467,7 @@ function ImgProcessing() {
 			}
 			newTable.push(tempArray);
 		}
+		if(newTable.length < 1) continue;
 		Image.table = newTable;
 		Image.width = newTable.length;
 		Image.height = newTable[0].length;
@@ -821,6 +835,9 @@ function BinaryString(img,type){
 				i+=4;
 			}
 			binaryString.push(count);
+		}
+		if(binaryString.length > 2 && binaryString[0] <= binaryString[1]/10) {
+			binaryString.splice(0,2);
 		}
 		var binaryHolder = binaryString.slice();
 		var success = false;

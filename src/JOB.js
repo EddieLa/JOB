@@ -33,9 +33,7 @@ JOB = {
 		SkipOrientation : false
 	},
 	SupportedFormats : ["Code128","Code93","Code39","EAN-13", "2Of5", "Inter2Of5", "Codabar"],// Don't touch.
-	SearchCanvas : null, // Don't the canvas either.
-	SearchContext : null,
-	ScanCanvas : null,
+	ScanCanvas : null, // Don't touch the canvas either.
 	ScanContext : null,
 	SquashCanvas : document.createElement("canvas"),
 	ImageCallback : null, // Callback for the decoding of an image.
@@ -270,7 +268,6 @@ JOB = {
 	},
 	
 	JOBDecodeImage : function (image,orientation,sceneCaptureType) {
-		console.log(sceneCaptureType);
 		if(orientation == 8 || orientation == 6) {
 			if(sceneCaptureType == "Landscape" && image.width > image.height) {
 				orientation = 1;
