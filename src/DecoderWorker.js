@@ -858,7 +858,7 @@ function BinaryString(img,type){
 				binaryString = binTemp;
 			}
 			if(typeof binaryString == 'undefined') continue;
-			if(binaryString.length>4 ){
+			if(binaryString.length>4 || (FormatPriority[i] == "Code39" && binaryString.length>2)){
 				if(FormatPriority[i] == "Code128") {
 					if(CheckCode128(binaryString)){
 						binaryString = DecodeCode128(binaryString);
