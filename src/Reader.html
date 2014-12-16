@@ -17,6 +17,7 @@
 			Result = document.querySelector("#textbit");
 			var canvas =document.getElementById("picture");
 			var ctx = canvas.getContext("2d");
+			JOB.SetDecodeFormats(["Code39","EAN-13"]);
 			JOB.Init();
 			JOB.SetImageCallback(function(result) {
 				if(result.length > 0){
