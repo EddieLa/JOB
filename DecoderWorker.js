@@ -858,7 +858,7 @@ function BinaryString(img,type){
 				binaryString = binTemp;
 			}
 			if(typeof binaryString == 'undefined') continue;
-			if(binaryString.length>4){
+			if(binaryString.length>4 || (FormatPriority[i] == "Code39" && binaryString.length>2)){
 				if(FormatPriority[i] == "Code128") {
 					if(CheckCode128(binaryString)){
 						binaryString = DecodeCode128(binaryString);
@@ -1522,9 +1522,12 @@ function DecodeCode39(string) {
 	for(var i = 1; i < string.length-1;i++) {
 		character = Code39Encoding[string[i].join("")].character;
 		if(character == "$" || character == "/" || character == "+" || character == "%") {
-			special = true;
-			specialchar = character;
-			continue;
+			// if next character exists => this a special character
+			if(i+1 < string.length-1){
+				special = true;
+				specialchar = character;
+				continue;
+			}
 		}
 		if(special) {
 			if(typeof ExtendedEncoding[specialchar+character] == 'undefined') {
