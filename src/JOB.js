@@ -44,7 +44,6 @@ JOB = {
 	Decoded : [], // Used to enfore the ForceUnique property.
 	DecoderWorker : new Worker("DecoderWorker.js"),
 	OrientationCallback : null,
-	PostOrientation : false,
 	// Always call the Init().
 	Init : function() {
 		JOB.ScanCanvas = JOB.FixCanvas(document.createElement("canvas"));
@@ -174,17 +173,14 @@ JOB = {
 		}
 		if(JOB.DecodeStreamActive) {
 			JOB.ScanContext.drawImage(JOB.Stream,0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height);
-			JOB.SearchContext.drawImage(JOB.ScanCanvas,0,0,JOB.SearchCanvas.width, JOB.SearchCanvas.height);
 			JOB.DecoderWorker.postMessage({
 				scan : JOB.ScanContext.getImageData(0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height).data,
 				scanWidth : JOB.ScanCanvas.width,
 				scanHeight : JOB.ScanCanvas.height,
-				search : JOB.SearchContext.getImageData(0,0,JOB.SearchCanvas.width,JOB.SearchCanvas.height).data,
-				searchWidth : JOB.SearchCanvas.width,
-				searchHeight : JOB.SearchCanvas.height,
 				multiple : JOB.Config.Multiple,
 				decodeFormats : JOB.Config.DecodeFormats,
-				cmd : "normal"
+				cmd : "normal",
+				rotation : 1,
 			});
 		
 		}
@@ -248,7 +244,7 @@ JOB = {
 		JOB.Stream = stream;
 		JOB.DecodeStreamActive = true;
 		JOB.DecoderWorker.onmessage = JOB.JOBStreamCallback;
-		JOB.ScanContext.drawImage(JOB.Stream,0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height);
+		JOB.ScanContext.drawImage(stream,0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height);
 		JOB.DecoderWorker.postMessage({
 			scan : JOB.ScanContext.getImageData(0,0,JOB.ScanCanvas.width,JOB.ScanCanvas.height).data,
 			scanWidth : JOB.ScanCanvas.width,
@@ -256,9 +252,8 @@ JOB = {
 			multiple : JOB.Config.Multiple,
 			decodeFormats : JOB.Config.DecodeFormats,
 			cmd : "normal",
-			rotation : 1
+			rotation : 1,
 		});
-		
 	},
 	
 	// Stops the decoding of a stream.
