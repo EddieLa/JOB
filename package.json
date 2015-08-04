@@ -1,8 +1,8 @@
 {
-  "name": "javascript-only-barcodereader",
+  "name": "barcode-reader",
   "version": "1.5.0",
   "description": "A Barcode scanner capapable of reading Code128, Code93, Code39, Standard/Industrial 2 of 5, Interleaved 2 of 5, Codabar and EAN-13 barcodes in javascript.",
-  "main": "index.js",
+  "main": "src/JOB.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
