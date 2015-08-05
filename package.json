@@ -18,8 +18,19 @@
     "Code39",
     "EAN-13"
   ],
-  "author": "EddieLa",
-  "license": "ISC",
+  "author": {
+    "name": "Eddie Larsson",
+    "email": "eddie.larsson245@gmail.com",
+    "url": ""
+  },
+  "contributors": [
+    {
+      "name": "Sean Gates",
+      "email": "oregonwebdev@gmail.com",
+      "url": ""
+    }
+  ],
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/EddieLa/BarcodeReader/issues"
   },
