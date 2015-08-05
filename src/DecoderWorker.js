@@ -1,5 +1,5 @@
 /* --------------------------------------------------
-Javascript Only Barcode_Reader (JOB) V1.6 by Eddie Larsson <https://github.com/EddieLa/BarcodeReader>
+Javascript Only Barcode_Reader (BarcodeReader) V1.6 by Eddie Larsson <https://github.com/EddieLa/BarcodeReader>
 
 This software is provided under the MIT license, http://opensource.org/licenses/MIT.
 All use of this software must include this

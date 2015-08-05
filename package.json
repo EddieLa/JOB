@@ -2,13 +2,13 @@
   "name": "barcode-reader",
   "version": "1.5.0",
   "description": "A Barcode scanner capapable of reading Code128, Code93, Code39, Standard/Industrial 2 of 5, Interleaved 2 of 5, Codabar and EAN-13 barcodes in javascript.",
-  "main": "src/JOB.js",
+  "main": "src/BarcodeReader.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EddieLa/JOB.git"
+    "url": "git+https://github.com/EddieLa/BarcodeReader.git"
   },
   "keywords": [
     "barcode",
@@ -21,7 +21,7 @@
   "author": "EddieLa",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/EddieLa/JOB/issues"
+    "url": "https://github.com/EddieLa/BarcodeReader/issues"
   },
-  "homepage": "https://github.com/EddieLa/JOB#readme"
+  "homepage": "https://github.com/EddieLa/BarcodeReader#readme"
 }

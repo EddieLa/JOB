@@ -3,7 +3,7 @@
  * __________________________________________________________________________________
  * All the callback function should have one parameter:
  * function(result){};
- * And the result parameter will contain an array of objects that look like JOB.
+ * And the result parameter will contain an array of objects that look like BarcodeReader.
  * result = [{Format: the barcode type, Value: the value of the barcode}];
  * __________________________________________________________________________________
  *
@@ -12,7 +12,7 @@
  * around with the SupportedFormats property.
  *
  */
-JOB = {
+BarcodeReader = {
   Config: {
     // Set to false if the decoder should look for one barcode and then stop. Increases performance.
     Multiple: true,
@@ -46,24 +46,24 @@ JOB = {
   OrientationCallback: null,
   // Always call the Init().
   Init: function() {
-    JOB.ScanCanvas = JOB.FixCanvas(document.createElement("canvas"));
-    JOB.ScanCanvas.width = 640;
-    JOB.ScanCanvas.height = 480;
-    JOB.ScanContext = JOB.ScanCanvas.getContext("2d");
+    BarcodeReader.ScanCanvas = BarcodeReader.FixCanvas(document.createElement("canvas"));
+    BarcodeReader.ScanCanvas.width = 640;
+    BarcodeReader.ScanCanvas.height = 480;
+    BarcodeReader.ScanContext = BarcodeReader.ScanCanvas.getContext("2d");
   },
 
   // Value should be true or false.
   SetRotationSkip: function(value) {
-    JOB.Config.SkipOrientation = value;
+    BarcodeReader.Config.SkipOrientation = value;
   },
   // Sets the callback function for the image decoding.
   SetImageCallback: function(callBack) {
-    JOB.ImageCallback = callBack;
+    BarcodeReader.ImageCallback = callBack;
   },
 
   // Sets the callback function for the video decoding.
   SetStreamCallback: function(callBack) {
-    JOB.StreamCallback = callBack;
+    BarcodeReader.StreamCallback = callBack;
   },
 
   // Sets callback for localization, the callback function should take one argument.
@@ -72,43 +72,43 @@ JOB = {
   // This represents a localization rectangle.
   // The rectangle comes from a 320, 240 area i.e the search canvas.
   SetLocalizationCallback: function(callBack) {
-    JOB.LocalizationCallback = callBack;
-    JOB.Config.LocalizationFeedback = true;
+    BarcodeReader.LocalizationCallback = callBack;
+    BarcodeReader.Config.LocalizationFeedback = true;
   },
 
   // Set to true if LocalizationCallback is set and you would like to
   // receive the feedback or false if
   SwitchLocalizationFeedback: function(bool) {
-    JOB.Config.LocalizationFeedback = bool;
+    BarcodeReader.Config.LocalizationFeedback = bool;
   },
 
   // Switches for changing the Multiple property.
   DecodeSingleBarcode: function() {
-    JOB.Config.Multiple = false;
+    BarcodeReader.Config.Multiple = false;
   },
   DecodeMultiple: function() {
-    JOB.Config.Multiple = true;
+    BarcodeReader.Config.Multiple = true;
   },
 
   // Sets the formats to decode, formats should be an array of a subset of the supported formats.
   SetDecodeFormats: function(formats) {
-    JOB.Config.DecodeFormats = [];
+    BarcodeReader.Config.DecodeFormats = [];
     for (var i = 0; i < formats.length; i++) {
-      if (JOB.SupportedFormats.indexOf(formats[i]) !== -1) {
-        JOB.Config.DecodeFormats.push(formats[i]);
+      if (BarcodeReader.SupportedFormats.indexOf(formats[i]) !== -1) {
+        BarcodeReader.Config.DecodeFormats.push(formats[i]);
       }
     }
-    if (JOB.Config.DecodeFormats.length === 0) {
-      JOB.Config.DecodeFormats = JOB.SupportedFormats.slice();
+    if (BarcodeReader.Config.DecodeFormats.length === 0) {
+      BarcodeReader.Config.DecodeFormats = BarcodeReader.SupportedFormats.slice();
     }
   },
 
   // Removes a list of formats from the formats to decode.
   SkipFormats: function(formats) {
     for (var i = 0; i < formats.length; i++) {
-      var index = JOB.Config.DecodeFormats.indexOf(formats[i]);
+      var index = BarcodeReader.Config.DecodeFormats.indexOf(formats[i]);
       if (index >= 0) {
-        JOB.Config.DecodeFormats.splice(index, 1);
+        BarcodeReader.Config.DecodeFormats.splice(index, 1);
       }
     }
   },
@@ -116,72 +116,72 @@ JOB = {
   // Adds a list of formats to the formats to decode.
   AddFormats: function(formats) {
     for (var i = 0; i < formats.length; i++) {
-      if (JOB.SupportedFormats.indexOf(formats[i]) !== -1) {
-        if (JOB.Config.DecodeFormats.indexOf(formats[i]) === -1) {
-          JOB.Config.DecodeFormats.push(formats[i]);
+      if (BarcodeReader.SupportedFormats.indexOf(formats[i]) !== -1) {
+        if (BarcodeReader.Config.DecodeFormats.indexOf(formats[i]) === -1) {
+          BarcodeReader.Config.DecodeFormats.push(formats[i]);
         }
       }
     }
   },
 
-  // The callback function for image decoding used internally by JOB.
-  JOBImageCallback: function(e) {
+  // The callback function for image decoding used internally by BarcodeReader.
+  BarcodeReaderImageCallback: function(e) {
     if (e.data.success === "localization") {
-      if (JOB.Config.LocalizationFeedback) {
-        JOB.LocalizationCallback(e.data.result);
+      if (BarcodeReader.Config.LocalizationFeedback) {
+        BarcodeReader.LocalizationCallback(e.data.result);
       }
       return;
     }
     if (e.data.success === "orientationData") {
-      JOB.OrientationCallback(e.data.result);
+      BarcodeReader.OrientationCallback(e.data.result);
       return;
     }
     var filteredData = [];
     for (var i = 0; i < e.data.result.length; i++) {
-      if (JOB.Decoded.indexOf(e.data.result[i].Value) === -1 || JOB.Config.ForceUnique === false) {
+      if (BarcodeReader.Decoded.indexOf(e.data.result[i].Value) === -1 || BarcodeReader.Config.ForceUnique === false) {
         filteredData.push(e.data.result[i]);
-        if (JOB.Config.ForceUnique) JOB.Decoded.push(e.data.result[i].Value);
+        if (BarcodeReader.Config.ForceUnique) BarcodeReader.Decoded.push(e.data.result[i].Value);
       }
     }
-    JOB.ImageCallback(filteredData);
-    JOB.Decoded = [];
+    BarcodeReader.ImageCallback(filteredData);
+    BarcodeReader.Decoded = [];
   },
 
-  // The callback function for stream decoding used internally by JOB.
-  JOBStreamCallback: function(e) {
+  // The callback function for stream decoding used internally by BarcodeReader.
+  BarcodeReaderStreamCallback: function(e) {
     if (e.data.success === "localization") {
-      if (JOB.Config.LocalizationFeedback) {
-        JOB.LocalizationCallback(e.data.result);
+      if (BarcodeReader.Config.LocalizationFeedback) {
+        BarcodeReader.LocalizationCallback(e.data.result);
       }
       return;
     }
-    if (e.data.success && JOB.DecodeStreamActive) {
+    if (e.data.success && BarcodeReader.DecodeStreamActive) {
       var filteredData = [];
       for (var i = 0; i < e.data.result.length; i++) {
-        if (JOB.Decoded.indexOf(e.data.result[i].Value) === -1 || JOB.ForceUnique === false) {
+        if (BarcodeReader.Decoded.indexOf(e.data.result[i].Value) === -1 || BarcodeReader.ForceUnique === false) {
           filteredData.push(e.data.result[i]);
-          if (JOB.ForceUnique) JOB.Decoded.push(e.data.result[i].Value);
+          if (BarcodeReader.ForceUnique) BarcodeReader.Decoded.push(e.data.result[i].Value);
         }
       }
       if (filteredData.length > 0) {
-        JOB.StreamCallback(filteredData);
+        BarcodeReader.StreamCallback(filteredData);
       }
     }
-    if (JOB.DecodeStreamActive) {
-      JOB.ScanContext.drawImage(JOB.Stream, 0, 0, JOB.ScanCanvas.width, JOB.ScanCanvas.height);
-      JOB.DecoderWorker.postMessage({
-        scan: JOB.ScanContext.getImageData(0, 0, JOB.ScanCanvas.width, JOB.ScanCanvas.height).data,
-        scanWidth: JOB.ScanCanvas.width,
-        scanHeight: JOB.ScanCanvas.height,
-        multiple: JOB.Config.Multiple,
-        decodeFormats: JOB.Config.DecodeFormats,
+    if (BarcodeReader.DecodeStreamActive) {
+      BarcodeReader.ScanContext.drawImage(BarcodeReader.Stream, 0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height);
+      BarcodeReader.DecoderWorker.postMessage({
+        scan: BarcodeReader.ScanContext.getImageData(0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height).data,
+        scanWidth: BarcodeReader.ScanCanvas.width,
+        scanHeight: BarcodeReader.ScanCanvas.height,
+        multiple: BarcodeReader.Config.Multiple,
+        decodeFormats: BarcodeReader.Config.DecodeFormats,
         cmd: "normal",
         rotation: 1,
       });
 
     }
-    if (!JOB.DecodeStreamActive) {
-      JOB.Decoded = [];
+    if (!BarcodeReader.DecodeStreamActive) {
+      BarcodeReader.Decoded = [];
     }
   },
 
@@ -192,26 +192,26 @@ JOB = {
     if (image instanceof Image || image instanceof HTMLImageElement) {
       image.exifdata = false;
       if (image.complete) {
-        if (JOB.Config.SkipOrientation) {
-          JOB.JOBDecodeImage(image, 1, "");
+        if (BarcodeReader.Config.SkipOrientation) {
+          BarcodeReader.BarcodeReaderDecodeImage(image, 1, "");
         } else {
           EXIF.getData(image, function(exifImage) {
             var orientation = EXIF.getTag(exifImage, "Orientation");
             var sceneType = EXIF.getTag(exifImage, "SceneCaptureType");
             if (typeof orientation !== 'number') orientation = 1;
-            JOB.JOBDecodeImage(exifImage, orientation, sceneType);
+            BarcodeReader.BarcodeReaderDecodeImage(exifImage, orientation, sceneType);
           });
         }
       } else {
         img.onload = function() {
-          if (JOB.Config.SkipOrientation) {
-            JOB.JOBDecodeImage(img, 1, "");
+          if (BarcodeReader.Config.SkipOrientation) {
+            BarcodeReader.BarcodeReaderDecodeImage(img, 1, "");
           } else {
             EXIF.getData(this, function(exifImage) {
               var orientation = EXIF.getTag(exifImage, "Orientation");
               var sceneType = EXIF.getTag(exifImage, "SceneCaptureType");
               if (typeof orientation !== 'number') orientation = 1;
-              JOB.JOBDecodeImage(exifImage, orientation, sceneType);
+              BarcodeReader.BarcodeReaderDecodeImage(exifImage, orientation, sceneType);
             });
           }
         };
@@ -219,14 +219,14 @@ JOB = {
       }
     } else {
       img.onload = function() {
-        if (JOB.Config.SkipOrientation) {
-          JOB.JOBDecodeImage(img, 1, "");
+        if (BarcodeReader.Config.SkipOrientation) {
+          BarcodeReader.BarcodeReaderDecodeImage(img, 1, "");
         } else {
           EXIF.getData(this, function(exifImage) {
             var orientation = EXIF.getTag(exifImage, "Orientation");
             var sceneType = EXIF.getTag(exifImage, "SceneCaptureType");
             if (typeof orientation !== 'number') orientation = 1;
-            JOB.JOBDecodeImage(exifImage, orientation, sceneType);
+            BarcodeReader.BarcodeReaderDecodeImage(exifImage, orientation, sceneType);
           });
         }
       };
@@ -236,16 +236,16 @@ JOB = {
 
   // Starts the decoding of a stream, the stream is a video not a blob i.e it's an element.
   DecodeStream: function(stream) {
-    JOB.Stream = stream;
-    JOB.DecodeStreamActive = true;
-    JOB.DecoderWorker.onmessage = JOB.JOBStreamCallback;
-    JOB.ScanContext.drawImage(stream, 0, 0, JOB.ScanCanvas.width, JOB.ScanCanvas.height);
-    JOB.DecoderWorker.postMessage({
-      scan: JOB.ScanContext.getImageData(0, 0, JOB.ScanCanvas.width, JOB.ScanCanvas.height).data,
-      scanWidth: JOB.ScanCanvas.width,
-      scanHeight: JOB.ScanCanvas.height,
-      multiple: JOB.Config.Multiple,
-      decodeFormats: JOB.Config.DecodeFormats,
+    BarcodeReader.Stream = stream;
+    BarcodeReader.DecodeStreamActive = true;
+    BarcodeReader.DecoderWorker.onmessage = BarcodeReader.BarcodeReaderStreamCallback;
+    BarcodeReader.ScanContext.drawImage(stream, 0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height);
+    BarcodeReader.DecoderWorker.postMessage({
+      scan: BarcodeReader.ScanContext.getImageData(0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height).data,
+      scanWidth: BarcodeReader.ScanCanvas.width,
+      scanHeight: BarcodeReader.ScanCanvas.height,
+      multiple: BarcodeReader.Config.Multiple,
+      decodeFormats: BarcodeReader.Config.DecodeFormats,
       cmd: "normal",
       rotation: 1,
     });
@@ -253,42 +253,42 @@ JOB = {
 
   // Stops the decoding of a stream.
   StopStreamDecode: function() {
-    JOB.DecodeStreamActive = false;
-    JOB.Decoded = [];
+    BarcodeReader.DecodeStreamActive = false;
+    BarcodeReader.Decoded = [];
   },
 
-  JOBDecodeImage: function(image, orientation, sceneCaptureType) {
+  BarcodeReaderDecodeImage: function(image, orientation, sceneCaptureType) {
     if (orientation === 8 || orientation === 6) {
       if (sceneCaptureType === "Landscape" && image.width > image.height) {
         orientation = 1;
-        JOB.ScanCanvas.width = 640;
-        JOB.ScanCanvas.height = 480;
+        BarcodeReader.ScanCanvas.width = 640;
+        BarcodeReader.ScanCanvas.height = 480;
       } else {
-        JOB.ScanCanvas.width = 480;
-        JOB.ScanCanvas.height = 640;
+        BarcodeReader.ScanCanvas.width = 480;
+        BarcodeReader.ScanCanvas.height = 640;
       }
     } else {
-      JOB.ScanCanvas.width = 640;
-      JOB.ScanCanvas.height = 480;
+      BarcodeReader.ScanCanvas.width = 640;
+      BarcodeReader.ScanCanvas.height = 480;
     }
-    JOB.DecoderWorker.onmessage = JOB.JOBImageCallback;
-    JOB.ScanContext.drawImage(image, 0, 0, JOB.ScanCanvas.width, JOB.ScanCanvas.height);
-    JOB.Orientation = orientation;
-    JOB.DecoderWorker.postMessage({
-      scan: JOB.ScanContext.getImageData(0, 0, JOB.ScanCanvas.width, JOB.ScanCanvas.height).data,
-      scanWidth: JOB.ScanCanvas.width,
-      scanHeight: JOB.ScanCanvas.height,
-      multiple: JOB.Config.Multiple,
-      decodeFormats: JOB.Config.DecodeFormats,
+    BarcodeReader.DecoderWorker.onmessage = BarcodeReader.BarcodeReaderImageCallback;
+    BarcodeReader.ScanContext.drawImage(image, 0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height);
+    BarcodeReader.Orientation = orientation;
+    BarcodeReader.DecoderWorker.postMessage({
+      scan: BarcodeReader.ScanContext.getImageData(0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height).data,
+      scanWidth: BarcodeReader.ScanCanvas.width,
+      scanHeight: BarcodeReader.ScanCanvas.height,
+      multiple: BarcodeReader.Config.Multiple,
+      decodeFormats: BarcodeReader.Config.DecodeFormats,
       cmd: "normal",
       rotation: orientation,
-      postOrientation: JOB.PostOrientation
+      postOrientation: BarcodeReader.PostOrientation
     });
   },
 
   DetectVerticalSquash: function(img) {
     var ih = img.naturalHeight;
-    var canvas = JOB.SquashCanvas;
+    var canvas = BarcodeReader.SquashCanvas;
     var alpha;
     var data;
     canvas.width = 1;
@@ -323,7 +323,7 @@ JOB = {
     ctx.drawImage = function(img, sx, sy, sw, sh, dx, dy, dw, dh) {
       var vertSquashRatio = 1;
       if (!!img && img.nodeName === 'IMG') {
-        vertSquashRatio = JOB.DetectVerticalSquash(img);
+        vertSquashRatio = BarcodeReader.DetectVerticalSquash(img);
         // sw || (sw = img.naturalWidth);
         // sh || (sh = img.naturalHeight);
       }
