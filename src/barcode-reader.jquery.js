@@ -1,31 +1,84 @@
 (function ( $ ) {
-    $.fn.barcodeReader = function(options) {
-      var settings = $.extend({}, $.fn.barcodeReader.defaults, options);
+  $.fn.barcodeReader = function(options) {
+    console.log(options);
 
-      var $mainEl = $(this);
-      var $canvasEl = $('<canvas id="barcode-reader__picture"></canvas>');
-      var $inputEl = $('<input id="barcode-reader__picture__input" type="file" accept="image/*;capture=camera" />');
-      var $resultEl = $('<p id="barcode-reader__result"></p>');
-      var $imgEl = $('<img id="barcode-reader__image" />');
+    var settings = $.extend({}, $.fn.barcodeReader.defaults, options);
+    var debug = settings.debug;
 
-      var mainEl = $mainEl[0];
-      var canvasEl = $canvasEl[0];
-      var inputEl = $inputEl[0];
-      var resultEl = $resultEl[0];
-      var imgEl = $imgEl[0];
+    var $userVideoCanvasEl = $(settings.videoCanvasTo);
+    var $userCanvasEl = $(settings.canvasTo);
+    var $userInputEl = $(settings.inputTo);
+    var $userResultEl = $(settings.outputTo);
+    var $userImgEl = $(settings.imageTo);
 
-      var ctx = canvasEl.getContext("2d");
+    var $mainEl = $(this);
+    var $videoCanvasEl = ($userVideoCanvasEl.length > 0) ? $userVideoCanvasEl : $('<canvas id="barcode-reader__video" width="320" height="240"></canvas>');
+    var $canvasEl = ($userCanvasEl.length > 0) ? $userCanvasEl : $('<canvas id="barcode-reader__picture"></canvas>');
+    var $inputEl = ($userInputEl.length > 0) ? $userInputEl : $('<input id="barcode-reader__picture__input" type="file" accept="image/*;capture=camera" />');
+    var $resultEl = ($userResultEl.length > 0) ? $userResultEl : $('<p id="barcode-reader__result"></p>');
+    var $imgEl = ($userImgEl.length > 0) ? $userImgEl : $('<img id="barcode-reader__image" />');
 
-      BarcodeReader.Init();
+    var mainEl = $mainEl[0];
+    var videoCanvasEl = $videoCanvasEl[0];
+    var canvasEl = $canvasEl[0];
+    var inputEl = $inputEl[0];
+    var resultEl = $resultEl[0];
+    var imgEl = $imgEl[0];
 
+    var localized = [];
+    var isStreaming = false;
+
+    var ctx = videoCanvasEl.getContext("2d");
+
+    var video = document.createElement("video");
+
+    var localStream;
+
+    // set video dimensions
+    video.width = 640;
+    video.height = 360;
+
+    if(!settings.video){
+      ctx = canvasEl.getContext("2d");
+    }
+
+    BarcodeReader.Init();
+
+    navigator.getUserMedia = checkVideoCapability();
+
+    BarcodeReader.SwitchLocalizationFeedback(true);
+
+    if(settings.video){
+      BarcodeReader.SetLocalizationCallback(function(result) {
+        localized = result;
+      });
+
+      BarcodeReader.StreamCallback = function(result) {
+        if (result.length > 0) {
+          var tempArray = [];
+          for (var i = 0; i < result.length; i++) {
+            tempArray.push(result[i].Format + " : " + result[i].Value);
+          }
+          $resultEl.append(tempArray.join("<br />"));
+
+          BarcodeReader.StopStreamDecode();
+
+          $(document).trigger("barcodeReader:decoded", [ result[0] ]);
+        }
+      };
+
+      // create the dom elements needed
+      $mainEl.append([ $videoCanvasEl, $resultEl ]);
+    }
+    else{
       BarcodeReader.SetImageCallback(function(result) {
         var tempArray = [];
         var i;
 
         if (result.length > 0) {
-          for (i = 0; i < result.length; i++) {
-            tempArray.push(result[i].Format + " : " + result[i].Value);
-          }
+          result.forEach(function(resultItem, index){
+            tempArray.push(resultItem.Format + " : " + resultItem.Value);
+          });
           $resultEl.append(tempArray.join("<br />"));
         } else {
           if (result.length === 0) {
@@ -50,8 +103,6 @@
 
         ctx.putImageData(data, 0, 0);
       };
-
-      BarcodeReader.SwitchLocalizationFeedback(true);
 
       BarcodeReader.SetLocalizationCallback(function(result) {
         ctx.beginPath();
@@ -99,9 +150,88 @@
 
       // create the dom elements needed
       $mainEl.append([ $canvasEl, $inputEl, $resultEl ]);
+    }
 
-      return this;
+    this.startVideo = function startVideo(){
+      localized = []; // reset the array
+
+      if (navigator.getUserMedia) {
+        navigator.getUserMedia({
+            "video": true,
+            "audio": false
+          },
+          function(localMediaStream) {
+            video.src = window.URL.createObjectURL(localMediaStream);
+            video.play();
+            ctx.translate($videoCanvasEl.outerWidth(), 0);
+            ctx.scale(-1, 1);
+            draw();
+            isStreaming = true;
+            localStream = localMediaStream;
+
+            // start the streaming
+            BarcodeReader.DecodeStream(video);
+          },
+          function(err) {
+            if(debug){
+              console.log("The following error occured: " + err);
+            }
+          }
+        );
+      } else {
+        if(debug){
+          console.log("getUserMedia not supported");
+        }
+      }
     };
 
-    $.fn.barcodeReader.defaults = {};
+    this.stopVideo = function stopVideo(){
+      BarcodeReader.StopStreamDecode();
+
+      localStream.stop();
+      isStreaming = false;
+    };
+
+    // drawing function for video capture
+    function draw() {
+      try {
+        ctx.drawImage(video, 0, 0, videoCanvasEl.width, videoCanvasEl.height);
+        if (localized.length > 0) {
+          ctx.beginPath();
+          ctx.lineWIdth = "2";
+          ctx.strokeStyle = "red";
+          for (var i = 0; i < localized.length; i++) {
+            ctx.rect(localized[i].x, localized[i].y, localized[i].width, localized[i].height);
+          }
+          ctx.stroke();
+        }
+        setTimeout(draw, 20);
+      } catch (e) {
+        if (e.name == "NS_ERROR_NOT_AVAILABLE") {
+          setTimeout(draw, 20);
+        } else {
+          throw e;
+        }
+      }
+    }
+
+    return this;
+  };
+
+  function checkVideoCapability(){
+    return navigator.getUserMedia ||
+      navigator.webkitGetUserMedia ||
+      navigator.mozGetUserMedia ||
+      navigator.msGetUserMedia;
+  }
 }( jQuery ));
+
+$.fn.barcodeReader.defaults = {
+  'debug': false,
+  'video': true,
+  'videoCanvasTo': '',
+  'canvasTo': '',
+  'outputTo': '',
+  'imageTo': '',
+  'inputFrom': ''
+};
