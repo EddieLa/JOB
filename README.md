@@ -21,3 +21,4 @@ Version 1.6 is up with a completely reworked localization process and also added
 - Added video support to the jQuery plugin
 - Fire event when barcode is decoded
 - Refactored jQuery elements allowing support for your own
+- Flipped video to make it easier to position the barcode
