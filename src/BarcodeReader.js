@@ -12,7 +12,11 @@
  * around with the SupportedFormats property.
  *
  */
-BarcodeReader = {
+
+var EXIF = require('./exif');
+var decoderWorkerBlobString = require('./DecoderWorker');
+
+var BarcodeReader = {
   Config: {
     // Set to false if the decoder should look for one barcode and then stop. Increases performance.
     Multiple: true,
@@ -176,7 +180,7 @@ BarcodeReader = {
         multiple: BarcodeReader.Config.Multiple,
         decodeFormats: BarcodeReader.Config.DecodeFormats,
         cmd: "normal",
-        rotation: 1,
+        rotation: 1
       });
 
     }
@@ -247,7 +251,7 @@ BarcodeReader = {
       multiple: BarcodeReader.Config.Multiple,
       decodeFormats: BarcodeReader.Config.DecodeFormats,
       cmd: "normal",
-      rotation: 1,
+      rotation: 1
     });
   },
 
@@ -337,3 +341,5 @@ BarcodeReader = {
     return canvas;
   }
 };
+
+module.exports = BarcodeReader;
