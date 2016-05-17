@@ -2958,3 +2958,12 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
 
 var decoderWorkerBlobString = decoderWorkerBlob.toString();
 decoderWorkerBlobString = decoderWorkerBlobString.substring(decoderWorkerBlobString.indexOf("{")+1, decoderWorkerBlobString.lastIndexOf("}"));
+
+if (typeof exports !== 'undefined') {
+  if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = decoderWorkerBlobString;
+  }
+  exports.decoderWorkerBlobString = decoderWorkerBlobString;
+} else {
+  root.decoderWorkerBlobString = decoderWorkerBlobString;
+}
