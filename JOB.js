@@ -161,7 +161,7 @@ JOB = {
 		}
 		if(e.data.success && JOB.DecodeStreamActive) {
 			var filteredData = [];
-			for(var i = 0; i < e.data.result; i++) {
+			for(var i = 0; i < e.data.result.length; i++) {
 				if(JOB.Decoded.indexOf(e.data.result[i].Value) == -1 || JOB.ForceUnique == false) {
 					filteredData.push(e.data.result[i]);
 					if(JOB.ForceUnique) JOB.Decoded.push(e.data.result[i].Value);
