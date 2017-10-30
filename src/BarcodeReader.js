@@ -13,8 +13,10 @@
  *
  */
 
-var EXIF = require('./exif');
-var decoderWorkerBlobString = require('./DecoderWorker');
+if (typeof require !== 'undefined') {
+    var EXIF = require('./exif');
+    var decoderWorkerBlobString = require('./DecoderWorker');
+}
 
 var BarcodeReader = {
   Config: {
@@ -356,5 +358,5 @@ if (typeof exports !== 'undefined') {
   }
   exports.BarcodeReader = BarcodeReader;
 } else {
-  root.BarcodeReader = BarcodeReader;
+  window.BarcodeReader = BarcodeReader;
 }
