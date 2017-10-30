@@ -2965,5 +2965,5 @@ if (typeof exports !== 'undefined') {
   }
   exports.decoderWorkerBlobString = decoderWorkerBlobString;
 } else {
-  root.decoderWorkerBlobString = decoderWorkerBlobString;
+  window.decoderWorkerBlobString = decoderWorkerBlobString;
 }
