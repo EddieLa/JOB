@@ -3,15 +3,16 @@
 <html lang="en">
 
 <head>
-  <title>BarcodeReader</title>
+  <title>BarcodeReader Example</title>
 </head>
 
 <body>
   <div id="container"></div>
-  <script type="text/javascript" src="BarcodeReader.js"></script>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="../dist/bundle.js"></script>
   <script type="text/javascript" src="barcode-reader.jquery.js"></script>
   <script type="text/javascript">
-    $('#container').barcodeReader();
+    $('#container').barcodeReader().startVideo();
   </script>
 </body>
 
