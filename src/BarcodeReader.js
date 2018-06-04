@@ -22,7 +22,7 @@ var BarcodeReader = {
     Multiple: true,
 
     // The formats that the decoder will look for.
-    DecodeFormats: ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar"],
+    DecodeFormats: ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar", "Code11", "CodeMSI"],
 
     // ForceUnique just must makes sure that the callback function isn't repeatedly called
     // with the same barcode. Especially in the case of a video stream.
@@ -36,7 +36,7 @@ var BarcodeReader = {
     // you are sure that the image orientation is 1 you should skip it.
     SkipOrientation: false
   },
-  SupportedFormats: ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar"], // Don't touch.
+  SupportedFormats: ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar", "Code11", "CodeMSI"], // Don't touch.
   ScanCanvas: null, // Don't touch the canvas either.
   ScanContext: null,
   SquashCanvas: document.createElement("canvas"),
