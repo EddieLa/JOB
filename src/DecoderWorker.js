@@ -31,6 +31,16 @@ THE SOFTWARE.
 
 var decoderWorkerBlob = function decoderWorkerBlob(){
 
+  function getMax(array) {
+    var max = 0, elem, i = 0;
+    while (elem = array[i++]) {
+      if (elem > max) {
+        max = elem;
+      }
+    }
+    return max;
+  }
+
   function Rotate(data, width, height, rotation) {
     var newData = [];
     var x, y;
@@ -834,7 +844,7 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
         binTemp = [];
         for (i = 0; i < totalBars; i++) {
           binTemp.push(binaryString.splice(0, 1)[0]);
-          // binaryString.splice(0, 1)[0];
+          // binaryString.splice(0, 1)[0]; // todo uncomment?
         }
         result.push(binTemp);
         if (binaryString.length === 5) result.push(binaryString.splice(0, 5));
@@ -875,6 +885,27 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
       do {
         result.push(binaryString.splice(0, totalBars));
         binaryString.splice(0, 1);
+      } while (binaryString.length > 0);
+    }
+    if (type === "Code11") {
+      totalBars = 5;
+      //len = binaryString[0];
+      //for(var i = 0; i < binaryString.length; i++) {
+      //  if(binaryString[i] > len*5) {
+      //    binaryString.splice(i, binaryString.length);
+      //    break;
+      //  }
+      //}
+      do {
+        result.push(binaryString.splice(0, totalBars));
+        binaryString.splice(0, 1);
+      } while (binaryString.length > 0);
+    }
+    if (type === "CodeMSI") {
+      totalBars = 8;
+      result.push(binaryString.splice(0, 2)); // Unpack start
+      do {
+        result.push(binaryString.splice(0, totalBars));
       } while (binaryString.length > 0);
     }
     return result;
@@ -919,6 +950,11 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
           second = binaryString.splice(binaryString.length - 1, 1)[0];
         }
         binTemp = Distribution(binaryString, FormatPriority[i]);
+        if (FormatPriority[i] === "Code11") {}
+        if (FormatPriority[i] === "CodeMSI") {
+          //console.log("binaryString", binaryString);
+          //console.log("binTemp", binTemp);
+        }
         if (FormatPriority[i] === "EAN-13") {
           binaryString = binTemp.data;
           corrections = binTemp.correction;
@@ -926,7 +962,7 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
           binaryString = binTemp;
         }
         if (typeof binaryString === 'undefined') continue;
-        if (binaryString.length > 4 || (FormatPriority[i] === "Code39" && binaryString.length > 2)) {
+        if (binaryString.length > 4 || (FormatPriority[i] === "Code39" && binaryString.length > 2) || (FormatPriority[i] === "Code11" && binaryString.length > 2)) {
           if (FormatPriority[i] === "Code128") {
             if (CheckCode128(binaryString)) {
               binaryString = DecodeCode128(binaryString);
@@ -973,6 +1009,22 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
             if (tempString) {
               binaryString = tempString;
               success = true;
+            }
+          } else if (FormatPriority[i] === "Code11") {
+            if (CheckCode11(binaryString)) {
+              tempString = DecodeCode11(binaryString);
+              if (tempString) {
+                binaryString = tempString;
+                success = true;
+              }
+            }
+          } else if (FormatPriority[i] === "CodeMSI") {
+            if (CheckCodeMSI(binaryString)) {
+              tempString = DecodeCodeMSI(binaryString);
+              if (tempString) {
+                binaryString = tempString;
+                success = true;
+              }
             }
           }
         }
@@ -1480,6 +1532,33 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
           testData += Math.abs(tempBin[i] - (BinArray[i] / sum) * total);
         }
       }
+      if (type === 7) { // Code11
+        max = getMax(BinArray);
+        for (i = 0; i < BinArray.length; i++) {
+          tempBin.push(((max / BinArray[i]) > 2) ? 0 : 1);
+        }
+      }
+      if (type === 8) { // CodeMSI
+        max = getMax(BinArray);
+        for (i = 0; i < BinArray.length; i++) {
+          var isBar = !(i % 2);
+          if (isBar) {
+            if ((max / BinArray[i]) >= 2) {
+              tempBin.push(1);
+            } else {
+              tempBin.push(1);
+              tempBin.push(1);
+            }
+          } else {
+            if ((max / BinArray[i]) >= 2) {
+              tempBin.push(0);
+            } else {
+              tempBin.push(0);
+              tempBin.push(0);
+            }
+          }
+        }
+      }
       result.push(tempBin);
     }
     if (type === 3) {
@@ -1509,6 +1588,19 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
     return (summarizer % 103 === checksum);
   }
 
+  function CheckCode11(string) {
+    var start = string[0].join("");
+    var end = string[string.length - 1].join("");
+    return Code11Encoding[start] === "SS" && Code11Encoding[end] === "SS";
+  }
+
+  function CheckCodeMSI(string) {
+    // console.log("CheckCodeMSI", string);
+    var start = string[0].join("");
+    var end = string[string.length - 1].join("");
+    return CodeMSIEncoding[start] === "Start" && CodeMSIEncoding[end] === "Stop";
+  }
+
   function Decode2Of5(string) {
     var result = "";
     var i;
@@ -1531,6 +1623,86 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
       result += CodaBarEncoding[string[i].join("")];
     }
     return result;
+  }
+
+  function DecodeCode11(string) {
+    var result = "";
+    var isValid = true;
+    if (!CheckCode11(string)) {
+      return false;
+    }
+    for (var i = 1; i < string.length - 1; i++) {
+      if (typeof Code11Encoding[string[i].join("")] === 'undefined') {
+        isValid = false;
+      } else {
+        result += Code11Encoding[string[i].join("")];
+      }
+    }
+    return isValid ? result : false;
+  }
+
+  function DecodeCodeMSI(string) {
+    var checkMod10 = function(stringNumber) {
+      function sum(digits) {
+        var sum = 0;
+        for (var i = 0; i < digits.length; i++) {
+          sum += digits[i];
+        }
+        return sum;
+      }
+
+      function digits_of(number) {
+        return (function() {
+          var _$rapyd$_Iter = number,
+            _$rapyd$_Result = [],
+            i;
+          for (var _$rapyd$_Index = 0; _$rapyd$_Index < _$rapyd$_Iter.length; _$rapyd$_Index++) {
+            i = _$rapyd$_Iter[_$rapyd$_Index];
+            _$rapyd$_Result.push(parseInt(i));
+          }
+          return _$rapyd$_Result;
+        })();
+      }
+
+      function luhn_checksum(card_number) {
+        var digits, odd_digits, even_digits, total, digit;
+        digits = digits_of(card_number);
+        odd_digits = digits.slice(-1, -2);
+        even_digits = digits.slice(-2, -2);
+        total = sum(odd_digits);
+        var _$rapyd$_Iter0 = even_digits;
+        for (var _$rapyd$_Index0 = 0; _$rapyd$_Index0 < _$rapyd$_Iter0.length; _$rapyd$_Index0++) {
+          digit = _$rapyd$_Iter0[_$rapyd$_Index0];
+          total += sum(digits_of(2 * digit));
+        }
+        return total % 10;
+      }
+
+      function is_luhn_valid(card_number) {
+        return luhn_checksum(card_number) === 0;
+      }
+
+      return is_luhn_valid(stringNumber);
+    };
+
+
+    var result = "";
+    var isValid = true;
+    if (!CheckCodeMSI(string)) {
+      return false;
+    }
+    for (var i = 1; i < string.length - 1; i++) {
+      if (typeof CodeMSIEncoding[string[i].join("")] === 'undefined') {
+        isValid = false;
+      } else {
+        result += CodeMSIEncoding[string[i].join("")];
+      }
+    }
+    // todo implement check mod 10
+    //if (isValid) {
+    //  var checkMod = checkMod10(result);
+    //}
+    return isValid ? result : false;
   }
 
   function DecodeEAN13(string) {
@@ -2837,6 +3009,36 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
     "0001110": "D"
   };
 
+  Code11Encoding = {
+    "00001": "0",
+    "10001": "1",
+    "01001": "2",
+    "11000": "3",
+    "00101": "4",
+    "10100": "5",
+    "01100": "6",
+    "00011": "7",
+    "10010": "8",
+    "10000": "9",
+    "00100": "-",
+    "00110": "SS"
+  };
+
+  CodeMSIEncoding = {
+    "110": "Start",
+    "100100100100": "0",
+    "100100100110": "1",
+    "100100110100": "2",
+    "100100110110": "3",
+    "100110100100": "4",
+    "100110100110": "5",
+    "100110110100": "6",
+    "100110110110": "7",
+    "110100100100": "8",
+    "110100100110": "9",
+    "100100": "Stop"
+  };
+
   EAN13Encoding = {
     "L": {
       "3211": 0,
@@ -2924,9 +3126,9 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
         success: "orientationData"
       });
     }
-    availableFormats = ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar"];
+    availableFormats = ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar", "Code11", "CodeMSI"];
     FormatPriority = [];
-    var decodeFormats = ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar"];
+    var decodeFormats = ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar", "Code11", "CodeMSI"];
     SecureCodabar = true;
     Secure2Of5 = true;
     Multiple = true;
