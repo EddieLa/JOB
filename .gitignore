@@ -213,3 +213,10 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+# Sublime Text Editor
+*.sublime*
+
+# NodeJS modeuls
+node_modules/
+

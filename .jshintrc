@@ -1,0 +1,8 @@
+{
+	"sub": true,
+	"undef": false,
+	"multistr": true,
+	"globals": {
+		"browser": true
+	}
+}
