@@ -844,7 +844,6 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
         binTemp = [];
         for (i = 0; i < totalBars; i++) {
           binTemp.push(binaryString.splice(0, 1)[0]);
-          // binaryString.splice(0, 1)[0]; // todo uncomment?
         }
         result.push(binTemp);
         if (binaryString.length === 5) result.push(binaryString.splice(0, 5));
@@ -889,13 +888,6 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
     }
     if (type === "Code11") {
       totalBars = 5;
-      //len = binaryString[0];
-      //for(var i = 0; i < binaryString.length; i++) {
-      //  if(binaryString[i] > len*5) {
-      //    binaryString.splice(i, binaryString.length);
-      //    break;
-      //  }
-      //}
       do {
         result.push(binaryString.splice(0, totalBars));
         binaryString.splice(0, 1);
@@ -951,10 +943,7 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
         }
         binTemp = Distribution(binaryString, FormatPriority[i]);
         if (FormatPriority[i] === "Code11") {}
-        if (FormatPriority[i] === "CodeMSI") {
-          //console.log("binaryString", binaryString);
-          //console.log("binTemp", binTemp);
-        }
+        if (FormatPriority[i] === "CodeMSI") {}
         if (FormatPriority[i] === "EAN-13") {
           binaryString = binTemp.data;
           corrections = binTemp.correction;
@@ -1595,7 +1584,6 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
   }
 
   function CheckCodeMSI(string) {
-    // console.log("CheckCodeMSI", string);
     var start = string[0].join("");
     var end = string[string.length - 1].join("");
     return CodeMSIEncoding[start] === "Start" && CodeMSIEncoding[end] === "Stop";
@@ -1698,10 +1686,7 @@ var decoderWorkerBlob = function decoderWorkerBlob(){
         result += CodeMSIEncoding[string[i].join("")];
       }
     }
-    // todo implement check mod 10
-    //if (isValid) {
-    //  var checkMod = checkMod10(result);
-    //}
+    // todo implement check mod 10. I.e. "var checkMod = checkMod10(result);"
     return isValid ? result : false;
   }
 
