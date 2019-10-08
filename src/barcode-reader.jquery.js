@@ -161,7 +161,7 @@
             "audio": false
           },
           function(localMediaStream) {
-            video.src = window.URL.createObjectURL(localMediaStream);
+            video.srcObject = new MediaStream(localMediaStream);
             video.play();
             ctx.translate($videoCanvasEl.outerWidth(), 0);
             ctx.scale(-1, 1);

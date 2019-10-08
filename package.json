@@ -4,7 +4,9 @@
   "description": "A Barcode scanner capapable of reading Code128, Code93, Code39, Standard/Industrial 2 of 5, Interleaved 2 of 5, Codabar and EAN-13 barcodes in javascript.",
   "main": "src/BarcodeReader.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "jshint": "jshint src/*.js",
+    "build": "webpack --config webpack.config.js"
   },
   "repository": {
     "type": "git",
@@ -34,5 +36,10 @@
   "bugs": {
     "url": "https://github.com/EddieLa/BarcodeReader/issues"
   },
-  "homepage": "https://github.com/EddieLa/BarcodeReader#readme"
+  "homepage": "https://github.com/EddieLa/BarcodeReader#readme",
+  "devDependencies": {
+    "jshint": "2.9.5",
+    "webpack": "4.10.2",
+    "webpack-cli": "3.0.1"
+  }
 }
